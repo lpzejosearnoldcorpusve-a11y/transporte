@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Settings } from "lucide-react"
+import { LayoutDashboard, Settings, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/common/logo"
 
@@ -11,6 +11,11 @@ const menuItems = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Usuarios y Roles",
+    href: "/dashboard/users-roles",
+    icon: Users,
   },
   {
     title: "Ajustes",

@@ -17,6 +17,7 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.6",
     "geist": "^1.5.1",
@@ -29,6 +30,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/css-modules": "^1.0.5",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^20",
