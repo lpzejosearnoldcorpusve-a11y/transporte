@@ -5,15 +5,23 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx db/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "@next/font": "^14.2.15",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@vercel/analytics": "^1.5.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.44.6",
     "geist": "^1.5.1",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
@@ -21,12 +29,16 @@
   },
   "devDependencies": {
     "@types/css-modules": "^1.0.5",
+    "@types/dotenv": "^6.1.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.5",
     "postcss": "^8.5.6",
     "tailwindcss": "3.4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
