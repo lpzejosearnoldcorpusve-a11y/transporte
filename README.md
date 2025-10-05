@@ -34,3 +34,134 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# Sistema de Transporte de Hidrocarburos
+
+Sistema de gestión para empresas de transporte de hidrocarburos construido con Next.js, Tailwind CSS 3.4.x, Drizzle ORM y Neon Database.
+
+## Estructura del Proyecto
+
+\`\`\`
+├── app/                      # Rutas de Next.js
+│   ├── api/                 # API Routes
+│   │   ├── auth/           # Autenticación (login, logout, me, seed)
+│   │   ├── users/          # CRUD de usuarios
+│   │   └── roles/          # CRUD de roles
+│   ├── dashboard/           # Páginas del dashboard
+│   │   ├── users-roles/    # Gestión de usuarios y roles
+│   │   └── settings/       # Configuración
+│   ├── layout.tsx           # Layout principal con AuthProvider
+│   ├── page.tsx             # Página de login
+│   └── globals.css          # Estilos globales
+├── components/
+│   ├── animations/          # Animaciones (WelcomeAnimation)
+│   ├── common/              # Componentes comunes (Logo, UserMenu)
+│   ├── forms/               # Formularios (LoginForm)
+│   ├── layouts/             # Layouts (DashboardLayout)
+│   ├── navigation/          # Navegación (Sidebar, Header)
+│   ├── pages/               # Contenido de páginas
+│   ├── users-roles/         # Componentes de usuarios y roles
+│   └── ui/                  # Componentes UI básicos
+├── db/                      # Base de datos
+│   ├── schema.ts           # Esquemas de Drizzle (usuarios, roles, sesiones)
+│   ├── index.ts            # Conexión a la base de datos
+│   └── migrate.ts          # Script de migración
+├── lib/                     # Utilidades
+│   ├── auth.ts             # Funciones de autenticación
+│   └── auth-context.tsx    # Contexto de autenticación
+├── middleware.ts            # Protección de rutas
+└── public/
+    └── assets/              # Imágenes y logos (coloca aquí tus archivos)
+\`\`\`
+
+## Colores del Sistema
+
+- **Verde Oscuro**: `#144230` (forest-green-900)
+- **Naranja**: `#f97316` (vibrant-orange-500)
+- **Blanco**: `#ffffff`
+
+## Instalación
+
+1. Instala las dependencias:
+\`\`\`bash
+npm install
+\`\`\`
+
+2. Configura las variables de entorno:
+\`\`\`bash
+cp .env.example .env.local
+\`\`\`
+
+Agrega tu `DATABASE_URL` de Neon en `.env.local`:
+\`\`\`
+DATABASE_URL=postgresql://user:password@host/database
+\`\`\`
+
+3. Ejecuta las migraciones de la base de datos:
+\`\`\`bash
+npm run db:generate
+npm run db:migrate
+\`\`\`
+
+4. (Opcional) Crea datos de prueba:
+\`\`\`bash
+# Llama a la API de seed desde tu navegador o con curl:
+curl -X POST http://localhost:3000/api/auth/seed
+\`\`\`
+
+Esto creará dos usuarios de prueba:
+- **Admin**: admin@empresa.com / admin123
+- **Operador**: operador@empresa.com / operador123
+
+5. Coloca tu logo en `public/assets/` y actualiza `components/common/logo.tsx`
+
+6. Ejecuta el servidor de desarrollo:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Características
+
+- ✅ Sistema de autenticación completo con sesiones
+- ✅ Animación de bienvenida futurista con Framer Motion
+- ✅ Gestión de usuarios y roles con CRUD completo
+- ✅ Sistema de permisos basado en roles
+- ✅ Protección de rutas con middleware
+- ✅ Dashboard con navegación vertical
+- ✅ Base de datos con Drizzle ORM y Neon
+- ✅ Componentes modulares y reutilizables
+- ✅ Tailwind CSS 3.4.x
+- ✅ Next.js 15 (estable)
+- ✅ Diseño responsive
+
+## Scripts Disponibles
+
+- `npm run dev` - Inicia el servidor de desarrollo
+- `npm run build` - Construye la aplicación para producción
+- `npm run start` - Inicia el servidor de producción
+- `npm run db:generate` - Genera migraciones de Drizzle
+- `npm run db:migrate` - Ejecuta las migraciones
+- `npm run db:studio` - Abre Drizzle Studio para ver la base de datos
+- `npm run db:push` - Sincroniza el esquema con la base de datos
+
+## Uso
+
+### Iniciar Sesión
+1. Accede a `http://localhost:3000`
+2. Ingresa tus credenciales
+3. Disfruta de la animación de bienvenida
+4. Serás redirigido al dashboard
+
+### Gestionar Usuarios y Roles
+1. Ve a "Usuarios y Roles" en el sidebar
+2. Usa las pestañas para alternar entre usuarios y roles
+3. Crea, edita o elimina usuarios y roles según sea necesario
+
+## Tecnologías
+
+- **Frontend**: Next.js 15, React 19, Tailwind CSS 3.4.x
+- **Animaciones**: Framer Motion
+- **Base de datos**: Neon (PostgreSQL)
+- **ORM**: Drizzle ORM
+- **Autenticación**: Sesiones con cookies HTTP-only
+- **Seguridad**: bcryptjs para hash de contraseñas

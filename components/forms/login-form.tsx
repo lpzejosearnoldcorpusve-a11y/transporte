@@ -1,30 +1,52 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { WelcomeAnimation } from "@/components/animations/welcome-animation"
+import { useRouter } from "next/navigation"
 
 export function LoginForm() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [userName, setUserName] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
-    // Aquí implementarás la lógica de autenticación
-    // Por ahora, simulamos un login exitoso
-    setTimeout(() => {
-      router.push("/dashboard")
+    try {
+      await login(email, password)
+
+      // Obtener nombre del usuario para la animación
+      const response = await fetch("/api/auth/me")
+      const data = await response.json()
+      setUserName(data.user.name)
+
+      // Mostrar animación de bienvenida
+      setShowWelcome(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión")
       setIsLoading(false)
-    }, 1000)
+    }
+  }
+
+  const handleWelcomeComplete = () => {
+    router.push("/dashboard")
+  }
+
+  if (showWelcome) {
+    return <WelcomeAnimation userName={userName} onComplete={handleWelcomeComplete} />
   }
 
   return (
@@ -35,6 +57,8 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 border border-red-200">{error}</div>}
+
           <div className="space-y-2">
             <Label htmlFor="email">Correo electrónico</Label>
             <Input

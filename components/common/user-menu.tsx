@@ -1,14 +1,13 @@
 "use client"
 
 import { LogOut, User } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 
 export function UserMenu() {
-  const router = useRouter()
+  const { user, logout } = useAuth()
 
-  const handleLogout = () => {
-    // Aquí implementarás la lógica de logout
-    router.push("/")
+  const handleLogout = async () => {
+    await logout()
   }
 
   return (
@@ -18,8 +17,8 @@ export function UserMenu() {
           <User className="h-5 w-5 text-forest-green-900" />
         </div>
         <div className="hidden md:block">
-          <p className="text-sm font-medium text-gray-900">Usuario</p>
-          <p className="text-xs text-gray-500">usuario@empresa.com</p>
+          <p className="text-sm font-medium text-gray-900">{user?.name || "Usuario"}</p>
+          <p className="text-xs text-gray-500">{user?.email || "usuario@empresa.com"}</p>
         </div>
       </div>
 
