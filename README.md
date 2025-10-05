@@ -39,40 +39,41 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 Sistema de gestión para empresas de transporte de hidrocarburos construido con Next.js, Tailwind CSS 3.4.x, Drizzle ORM y Neon Database.
 
-## Estructura del Proyecto
-
-\`\`\`
-├── app/                      # Rutas de Next.js
-│   ├── api/                 # API Routes
-│   │   ├── auth/           # Autenticación (login, logout, me, seed)
-│   │   ├── users/          # CRUD de usuarios
-│   │   └── roles/          # CRUD de roles
-│   ├── dashboard/           # Páginas del dashboard
-│   │   ├── users-roles/    # Gestión de usuarios y roles
-│   │   └── settings/       # Configuración
-│   ├── layout.tsx           # Layout principal con AuthProvider
-│   ├── page.tsx             # Página de login
-│   └── globals.css          # Estilos globales
-├── components/
-│   ├── animations/          # Animaciones (WelcomeAnimation)
-│   ├── common/              # Componentes comunes (Logo, UserMenu)
-│   ├── forms/               # Formularios (LoginForm)
-│   ├── layouts/             # Layouts (DashboardLayout)
-│   ├── navigation/          # Navegación (Sidebar, Header)
-│   ├── pages/               # Contenido de páginas
-│   ├── users-roles/         # Componentes de usuarios y roles
-│   └── ui/                  # Componentes UI básicos
-├── db/                      # Base de datos
-│   ├── schema.ts           # Esquemas de Drizzle (usuarios, roles, sesiones)
-│   ├── index.ts            # Conexión a la base de datos
-│   └── migrate.ts          # Script de migración
-├── lib/                     # Utilidades
-│   ├── auth.ts             # Funciones de autenticación
-│   └── auth-context.tsx    # Contexto de autenticación
-├── middleware.ts            # Protección de rutas
+├── app/                      # Rutas principales de Next.js
+│   ├── api/                  # API Routes (Backend)
+│   │   ├── auth/             # Autenticación (login, logout, me, seed)
+│   │   ├── users/            # CRUD de usuarios
+│   │   └── roles/            # CRUD de roles
+│   ├── dashboard/            # Sección del panel administrativo
+│   │   ├── users-roles/      # Gestión de usuarios y roles
+│   │   └── settings/         # Configuración general
+│   ├── layout.tsx            # Layout principal (con AuthProvider)
+│   ├── page.tsx              # Página de login / acceso
+│   └── globals.css           # Estilos globales
+│
+├── components/               # Componentes reutilizables
+│   ├── animations/           # Animaciones (WelcomeAnimation, etc.)
+│   ├── common/               # Elementos comunes (Logo, UserMenu)
+│   ├── forms/                # Formularios (LoginForm)
+│   ├── layouts/              # Layouts (DashboardLayout)
+│   ├── navigation/           # Sidebar, Header, Menús
+│   ├── pages/                # Contenido específico de páginas
+│   ├── users-roles/          # Componentes de usuarios y roles
+│   └── ui/                   # Componentes UI básicos (botones, cards)
+│
+├── db/                       # Base de datos (Drizzle ORM)
+│   ├── schema.ts             # Definición de esquemas (users, roles, sessions)
+│   ├── index.ts              # Conexión e inicialización de la DB
+│   └── migrate.ts            # Scripts de migración
+│
+├── lib/                      # Librerías y utilidades
+│   ├── auth.ts               # Funciones de autenticación (login, JWT)
+│   └── auth-context.tsx      # Contexto global de autenticación
+│
+├── middleware.ts             # Middleware de protección de rutas
+│
 └── public/
-    └── assets/              # Imágenes y logos (coloca aquí tus archivos)
-\`\`\`
+    └── assets/               # Imágenes y logos del proyecto
 
 ## Colores del Sistema
 
