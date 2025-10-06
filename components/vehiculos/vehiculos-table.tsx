@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { VehiculoStatusBadge } from "./vehiculo-status-badge"
 import { VehiculoRowActions } from "./vehiculo-row-actions"
-import { Vehiculo } from "@/types/vehiculo"
+import type { Vehiculo } from "@/types/vehiculo"
 
 interface VehiculosTableProps {
   vehiculos: Vehiculo[]
@@ -31,7 +31,6 @@ export function VehiculosTable({ vehiculos, onEdit, onDelete }: VehiculosTablePr
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
-
         <TableBody>
           {vehiculos.length === 0 ? (
             <TableRow>
@@ -41,7 +40,7 @@ export function VehiculosTable({ vehiculos, onEdit, onDelete }: VehiculosTablePr
             </TableRow>
           ) : (
             vehiculos.map((vehiculo) => (
-              <TableRow key={vehiculo.id ?? vehiculo.placa}>
+              <TableRow key={vehiculo.id}>
                 <TableCell className="font-bold text-forest-green-700">{vehiculo.placa}</TableCell>
                 <TableCell>{vehiculo.marca}</TableCell>
                 <TableCell>{vehiculo.anio || "-"}</TableCell>
@@ -50,15 +49,14 @@ export function VehiculosTable({ vehiculos, onEdit, onDelete }: VehiculosTablePr
                 </TableCell>
                 <TableCell>{vehiculo.capacidadLitros || "-"}</TableCell>
                 <TableCell>
-                <VehiculoStatusBadge date={vehiculo.vencSoat ?? null} type="soat" />
+                  <VehiculoStatusBadge date={vehiculo.vencSoat} type="soat" />
                 </TableCell>
                 <TableCell>
-                <VehiculoStatusBadge date={vehiculo.vencItv ?? null} type="itv" />
+                  <VehiculoStatusBadge date={vehiculo.vencItv} type="itv" />
                 </TableCell>
                 <TableCell>
-                <VehiculoStatusBadge date={vehiculo.vencPermiso ?? null} type="permiso" />
-</TableCell>
-
+                  <VehiculoStatusBadge date={vehiculo.vencPermiso} type="permiso" />
+                </TableCell>
                 <TableCell>
                   {vehiculo.gpsActivo ? (
                     <Badge variant="success" className="text-xs">
@@ -71,26 +69,12 @@ export function VehiculosTable({ vehiculos, onEdit, onDelete }: VehiculosTablePr
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      vehiculo.estado === "activo"
-                        ? "success"
-                        : vehiculo.estado === "mantenimiento"
-                        ? "warning"
-                        : "default"
-                    }
-                  >
+                  <Badge variant={vehiculo.estado === "activo" ? "success" : "default"}>
                     {vehiculo.estado || "activo"}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  {vehiculo.id && (
-                    <VehiculoRowActions
-                      vehiculo={vehiculo}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
-                  )}
+                  <VehiculoRowActions vehiculo={vehiculo} onEdit={onEdit} onDelete={onDelete} />
                 </TableCell>
               </TableRow>
             ))

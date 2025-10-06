@@ -76,6 +76,46 @@ export const vehiculos = pgTable("vehiculos", {
   actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
 })
 
+// Tabla de rutas
+export const rutas = pgTable("rutas", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  nombre: text("nombre").notNull(),
+  vehiculoId: text("vehiculo_id").references(() => vehiculos.id),
+
+  // Origen y destino
+  origen: text("origen").notNull(),
+  origenLat: numeric("origen_lat"),
+  origenLng: numeric("origen_lng"),
+
+  destino: text("destino").notNull(),
+  destinoLat: numeric("destino_lat"),
+  destinoLng: numeric("destino_lng"),
+
+  // Datos de Google Maps
+  distanciaKm: numeric("distancia_km"),
+  duracionMinutos: numeric("duracion_minutos"),
+
+  // Fechas planificadas
+  fechaSalida: timestamp("fecha_salida"),
+  fechaLlegadaEstimada: timestamp("fecha_llegada_estimada"),
+
+  // Estado de la ruta
+  estado: text("estado").default("planificada"), // planificada, en_curso, completada, cancelada
+
+  // Seguimiento
+  inicioReal: timestamp("inicio_real"),
+  finReal: timestamp("fin_real"),
+
+  // Observaciones
+  observaciones: text("observaciones"),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -88,3 +128,6 @@ export type NewUserSession = typeof userSessions.$inferInsert
 
 export type Vehiculo = typeof vehiculos.$inferSelect
 export type NewVehiculo = typeof vehiculos.$inferInsert
+
+export type Ruta = typeof rutas.$inferSelect
+export type NewRuta = typeof rutas.$inferInsert

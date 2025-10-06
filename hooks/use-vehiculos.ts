@@ -1,27 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-
-interface Vehiculo {
-  id: string
-  placa: string
-  marca: string
-  anio: string | null
-  tipoVehiculo: string | null
-  capacidadLitros: string | null
-  combustible: string | null
-  chasis: string | null
-  nroSoat: string | null
-  vencSoat: Date | null
-  nroItv: string | null
-  vencItv: Date | null
-  nroPermiso: string | null
-  vencPermiso: Date | null
-  gpsId: string | null
-  gpsActivo: boolean | null
-  estado: string | null
-  creadoEn: Date
-}
+import type { Vehiculo } from "@/types/vehiculo"
 
 export function useVehiculos() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])

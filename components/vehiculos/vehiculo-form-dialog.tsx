@@ -5,26 +5,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { VehiculoForm } from "./vehiculo-form"
-
-interface Vehiculo {
-  id?: string
-  placa: string
-  marca: string
-  anio: string | null
-  tipoVehiculo: string | null
-  capacidadLitros: string | null
-  combustible: string | null
-  chasis: string | null
-  nroSoat: string | null
-  vencSoat: Date | null
-  nroItv: string | null
-  vencItv: Date | null
-  nroPermiso: string | null
-  vencPermiso: Date | null
-  gpsId: string | null
-  gpsActivo: boolean | null
-  estado: string | null
-}
+import type { Vehiculo, VehiculoFormData } from "@/types/vehiculo"
 
 interface VehiculoFormDialogProps {
   open: boolean
@@ -34,7 +15,7 @@ interface VehiculoFormDialogProps {
 }
 
 export function VehiculoFormDialog({ open, onOpenChange, vehiculo, onSave }: VehiculoFormDialogProps) {
-  const [formData, setFormData] = useState<Vehiculo>({
+  const [formData, setFormData] = useState<VehiculoFormData>({
     placa: "",
     marca: "",
     anio: null,
@@ -80,7 +61,7 @@ export function VehiculoFormDialog({ open, onOpenChange, vehiculo, onSave }: Veh
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave(formData)
+    onSave(formData as Vehiculo)
   }
 
   return (

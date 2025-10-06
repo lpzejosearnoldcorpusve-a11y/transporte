@@ -1,31 +1,13 @@
 "use client"
 
 import { useState } from "react"
-
-interface VehiculoFormData {
-  placa: string
-  marca: string
-  anio?: string
-  tipoVehiculo?: string
-  capacidadLitros?: string
-  combustible?: string
-  chasis?: string
-  nroSoat?: string
-  vencSoat?: string
-  nroItv?: string
-  vencItv?: string
-  nroPermiso?: string
-  vencPermiso?: string
-  gpsId?: string
-  gpsActivo?: boolean
-  estado?: string
-}
+import type { Vehiculo, VehiculoFormData } from "@/types/vehiculo"
 
 export function useVehiculoMutations() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const createVehiculo = async (data: VehiculoFormData) => {
+  const createVehiculo = async (data: VehiculoFormData | Vehiculo) => {
     try {
       setLoading(true)
       setError(null)
@@ -51,7 +33,7 @@ export function useVehiculoMutations() {
     }
   }
 
-  const updateVehiculo = async (id: string, data: VehiculoFormData) => {
+  const updateVehiculo = async (id: string, data: VehiculoFormData | Vehiculo) => {
     try {
       setLoading(true)
       setError(null)

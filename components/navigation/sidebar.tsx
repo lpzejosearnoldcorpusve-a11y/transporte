@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Settings, Users, Truck } from "lucide-react"
+import { LayoutDashboard, Settings, Users, Truck, Route } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/common/logo"
 
@@ -21,6 +21,11 @@ const menuItems = [
     title: "Vehículos",
     href: "/dashboard/vehiculos",
     icon: Truck,
+  },
+  {
+    title: "Rutas",
+    href: "/dashboard/rutas",
+    icon: Route,
   },
   {
     title: "Ajustes",

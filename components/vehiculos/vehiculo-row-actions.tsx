@@ -1,8 +1,8 @@
 "use client"
 
-import { FC } from "react"
-import { Vehiculo } from "@/types/vehiculo"
+import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import type { Vehiculo } from "@/types/vehiculo"
 
 interface VehiculoRowActionsProps {
   vehiculo: Vehiculo
@@ -10,17 +10,19 @@ interface VehiculoRowActionsProps {
   onDelete: (vehiculoId: string) => void
 }
 
-export const VehiculoRowActions: FC<VehiculoRowActionsProps> = ({ vehiculo, onEdit, onDelete }) => {
-  // Si no tiene id, no se muestran las acciones
-  if (!vehiculo.id) return null
-
+export function VehiculoRowActions({ vehiculo, onEdit, onDelete }: VehiculoRowActionsProps) {
   return (
-    <div className="flex gap-2 justify-end">
-      <Button size="sm" variant="outline" onClick={() => onEdit(vehiculo)}>
-        Editar
+    <div className="flex justify-end gap-2">
+      <Button variant="ghost" size="sm" onClick={() => onEdit(vehiculo)} className="h-8 w-8 p-0">
+        <Edit className="h-4 w-4" />
       </Button>
-      <Button size="sm" variant="secondary" onClick={() => onDelete(vehiculo.id!)}>
-        Eliminar
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onDelete(vehiculo.id)}
+        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+      >
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   )
