@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, numeric } from "drizzle-orm/pg-core"
 import { createId } from "@paralleldrive/cuid2"
 
 // Tabla de roles
@@ -45,6 +45,37 @@ export const userSessions = pgTable("user_sessions", {
   ip: text("ip"),
 })
 
+// Tabla de vehículos
+export const vehiculos = pgTable("vehiculos", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  placa: text("placa").notNull().unique(),
+  marca: text("marca").notNull(), // Marca y modelo juntos
+  anio: numeric("anio"),
+  tipoVehiculo: text("tipo_vehiculo").default("cisterna"),
+  capacidadLitros: numeric("capacidad_litros"),
+  combustible: text("combustible").default("diésel"),
+  chasis: text("chasis"),
+
+  nroSoat: text("nro_soat"),
+  vencSoat: timestamp("venc_soat"),
+  nroItv: text("nro_itv"),
+  vencItv: timestamp("venc_itv"),
+  nroPermiso: text("nro_permiso"),
+  vencPermiso: timestamp("venc_permiso"),
+
+  // Campos GPS (ahora aceptan NULL)
+  gpsId: text("gps_id"),
+  gpsActivo: boolean("gps_activo"),
+
+  estado: text("estado").default("activo"),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -54,3 +85,6 @@ export type NewUser = typeof users.$inferInsert
 
 export type UserSession = typeof userSessions.$inferSelect
 export type NewUserSession = typeof userSessions.$inferInsert
+
+export type Vehiculo = typeof vehiculos.$inferSelect
+export type NewVehiculo = typeof vehiculos.$inferInsert

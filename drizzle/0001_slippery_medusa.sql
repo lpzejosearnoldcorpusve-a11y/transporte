@@ -1,0 +1,22 @@
+CREATE TABLE "vehiculos" (
+	"id" text PRIMARY KEY NOT NULL,
+	"placa" text NOT NULL,
+	"marca" text NOT NULL,
+	"anio" numeric,
+	"tipo_vehiculo" text DEFAULT 'cisterna',
+	"capacidad_litros" numeric,
+	"combustible" text DEFAULT 'diésel',
+	"chasis" text,
+	"nro_soat" text,
+	"venc_soat" timestamp,
+	"nro_itv" text,
+	"venc_itv" timestamp,
+	"nro_permiso" text,
+	"venc_permiso" timestamp,
+	"gps_id" text,
+	"gps_activo" boolean,
+	"estado" text DEFAULT 'activo',
+	"creado_en" timestamp DEFAULT now() NOT NULL,
+	"actualizado_en" timestamp,
+	CONSTRAINT "vehiculos_placa_unique" UNIQUE("placa")
+);

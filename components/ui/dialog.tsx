@@ -15,7 +15,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      {/* Fondo oscuro */}
+      <div
+        className="fixed inset-0 bg-black/50"
+        onClick={() => onOpenChange(false)}
+      />
       <div className="relative z-50 w-full max-w-lg">{children}</div>
     </div>
   )
@@ -59,4 +63,13 @@ export function DialogClose({ onClick }: DialogCloseProps) {
       <X className="h-4 w-4" />
     </button>
   )
+}
+
+interface DialogFooterProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function DialogFooter({ children, className }: DialogFooterProps) {
+  return <div className={cn("mt-4 flex justify-end space-x-2", className)}>{children}</div>
 }
