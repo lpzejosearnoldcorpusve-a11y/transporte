@@ -116,6 +116,52 @@ export const rutas = pgTable("rutas", {
   actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
 })
 
+// Tabla de mantenimientos
+export const mantenimientos = pgTable("mantenimientos", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  vehiculoId: text("vehiculo_id")
+    .references(() => vehiculos.id)
+    .notNull(),
+
+  // Fechas
+  fechaInicio: timestamp("fecha_inicio").notNull(),
+  fechaFin: timestamp("fecha_fin"),
+
+  // Estado del mantenimiento
+  estado: text("estado").default("en_proceso"), // en_proceso, completado
+
+  // Datos del taller/mecánico
+  nombreTaller: text("nombre_taller"),
+  contactoTaller: text("contacto_taller"),
+
+  // Descripción general
+  descripcionProblema: text("descripcion_problema"),
+  trabajosRealizados: text("trabajos_realizados"),
+
+  // Partes cambiadas (JSON)
+  partesInteriores: text("partes_interiores").array(),
+  partesExteriores: text("partes_exteriores").array(),
+
+  // Costos
+  costoTotal: numeric("costo_total"),
+  moneda: text("moneda").default("PEN"),
+
+  // Fichas de mantenimiento (imágenes)
+  fichasUrls: text("fichas_urls").array(), // URLs de las imágenes subidas
+
+  // Datos extraídos por OCR (JSON)
+  datosOcr: text("datos_ocr"), // JSON string con datos extraídos
+
+  // Usuario que registró
+  registradoPor: text("registrado_por").references(() => users.id),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -131,3 +177,6 @@ export type NewVehiculo = typeof vehiculos.$inferInsert
 
 export type Ruta = typeof rutas.$inferSelect
 export type NewRuta = typeof rutas.$inferInsert
+
+export type Mantenimiento = typeof mantenimientos.$inferSelect
+export type NewMantenimiento = typeof mantenimientos.$inferInsert

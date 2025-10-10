@@ -18,7 +18,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 export async function createSession(userId: string, userAgent?: string, ip?: string) {
   const token = createId()
   const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 1) // Sesión válida por 1 días
+  expiresAt.setDate(expiresAt.getDate() + 1) // Sesión válida por 1 día
 
   const [session] = await db
     .insert(userSessions)
