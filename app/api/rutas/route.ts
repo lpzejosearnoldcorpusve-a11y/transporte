@@ -1,8 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { rutas, vehiculos } from "@/db/schema"
-import { eq } from "drizzle-orm"
-import { calculateRouteDistance } from "@/lib/google-maps"
+// /app/api/rutas/route.ts
+
+import { type NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { rutas, vehiculos } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { calculateRouteDistance } from "@/lib/openstreetmap";
 
 // GET - Obtener todas las rutas
 export async function GET() {
@@ -13,45 +15,46 @@ export async function GET() {
         vehiculo: vehiculos,
       })
       .from(rutas)
-      .leftJoin(vehiculos, eq(rutas.vehiculoId, vehiculos.id))
+      .leftJoin(vehiculos, eq(rutas.vehiculoId, vehiculos.id));
 
+    // Formateo para una respuesta más limpia
     const formattedRutas = allRutas.map((item) => ({
       ...item.ruta,
       vehiculo: item.vehiculo,
-    }))
+    }));
 
-    return NextResponse.json(formattedRutas)
+    return NextResponse.json(formattedRutas);
   } catch (error) {
-    console.error("Error obteniendo rutas:", error)
-    return NextResponse.json({ error: "Error al obtener las rutas" }, { status: 500 })
+    console.error("Error obteniendo rutas:", error);
+    return NextResponse.json({ error: "Error al obtener las rutas" }, { status: 500 });
   }
 }
 
 // POST - Crear nueva ruta
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { nombre, vehiculoId, origen, destino, fechaSalida, observaciones } = body
+    const body = await request.json();
+    const { nombre, vehiculoId, origen, destino, fechaSalida, observaciones } = body;
 
-    // Validaciones
     if (!nombre || !origen || !destino) {
-      return NextResponse.json({ error: "Nombre, origen y destino son requeridos" }, { status: 400 })
+      return NextResponse.json({ error: "Nombre, origen y destino son requeridos" }, { status: 400 });
     }
 
-    // Calcular distancia y duración con Google Maps
-    let distanceData
+    let distanceData;
     try {
-      distanceData = await calculateRouteDistance(origen, destino)
+      // Llamada a la API externa aislada para un mejor control de errores
+      distanceData = await calculateRouteDistance(origen, destino);
     } catch (error) {
-      console.error("Error con Google Maps:", error)
-      return NextResponse.json({ error: "Error al calcular la distancia con Google Maps" }, { status: 400 })
+      console.error("Error con OpenStreetMap:", error);
+      const errorMessage = error instanceof Error ? error.message : "No se pudo calcular la ruta.";
+      return NextResponse.json({ error: `Error con OpenStreetMap: ${errorMessage}` }, { status: 400 });
     }
 
     // Calcular fecha de llegada estimada
-    let fechaLlegadaEstimada = null
+    let fechaLlegadaEstimada: Date | null = null;
     if (fechaSalida && distanceData.durationMinutes) {
-      const salida = new Date(fechaSalida)
-      fechaLlegadaEstimada = new Date(salida.getTime() + distanceData.durationMinutes * 60000)
+      const salida = new Date(fechaSalida);
+      fechaLlegadaEstimada = new Date(salida.getTime() + distanceData.durationMinutes * 60000);
     }
 
     const [newRuta] = await db
@@ -74,82 +77,99 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    return NextResponse.json(newRuta, { status: 201 })
+    return NextResponse.json(newRuta, { status: 201 });
   } catch (error) {
-    console.error("Error creando ruta:", error)
-    return NextResponse.json({ error: "Error al crear la ruta" }, { status: 500 })
+    console.error("Error creando ruta:", error);
+    return NextResponse.json({ error: "Error al crear la ruta" }, { status: 500 });
   }
 }
 
 // PUT - Actualizar ruta
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { id, ...updateData } = body
+    const body = await request.json();
+    const { id, ...updateData } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "ID de ruta es requerido" }, { status: 400 })
+      return NextResponse.json({ error: "ID de ruta es requerido" }, { status: 400 });
     }
 
-    // Si se actualizan origen o destino, recalcular con Google Maps
+    // Convertir fechas de string a Date si existen
+    if (updateData.fechaSalida) {
+      updateData.fechaSalida = new Date(updateData.fechaSalida);
+    }
+    if (updateData.fechaLlegadaEstimada) {
+      updateData.fechaLlegadaEstimada = new Date(updateData.fechaLlegadaEstimada);
+    }
+
+    // Si se actualizan origen o destino, recalcular la distancia y duración
     if (updateData.origen || updateData.destino) {
-      const [existingRuta] = await db.select().from(rutas).where(eq(rutas.id, id)).limit(1)
+      const [existingRuta] = await db.select().from(rutas).where(eq(rutas.id, id)).limit(1);
 
       if (!existingRuta) {
-        return NextResponse.json({ error: "Ruta no encontrada" }, { status: 404 })
+        return NextResponse.json({ error: "Ruta no encontrada" }, { status: 404 });
       }
 
-      const origen = updateData.origen || existingRuta.origen
-      const destino = updateData.destino || existingRuta.destino
-
+      // Usa el nuevo dato o el existente si no se provee uno nuevo
+      const origen = updateData.origen || existingRuta.origen;
+      const destino = updateData.destino || existingRuta.destino;
+      
       try {
-        const distanceData = await calculateRouteDistance(origen, destino)
+        const distanceData = await calculateRouteDistance(origen, destino);
 
-        updateData.origenLat = distanceData.origenLat.toString()
-        updateData.origenLng = distanceData.origenLng.toString()
-        updateData.destinoLat = distanceData.destinoLat.toString()
-        updateData.destinoLng = distanceData.destinoLng.toString()
-        updateData.distanciaKm = distanceData.distanceKm.toString()
-        updateData.duracionMinutos = distanceData.durationMinutes.toString()
+        // Actualiza todos los campos relacionados con la ruta
+        updateData.origenLat = distanceData.origenLat.toString();
+        updateData.origenLng = distanceData.origenLng.toString();
+        updateData.destinoLat = distanceData.destinoLat.toString();
+        updateData.destinoLng = distanceData.destinoLng.toString();
+        updateData.distanciaKm = distanceData.distanceKm.toString();
+        updateData.duracionMinutos = distanceData.durationMinutes.toString();
 
         // Recalcular fecha de llegada estimada
-        if (updateData.fechaSalida || existingRuta.fechaSalida) {
-          const salida = new Date(updateData.fechaSalida || existingRuta.fechaSalida)
-          updateData.fechaLlegadaEstimada = new Date(salida.getTime() + distanceData.durationMinutes * 60000)
+        const fechaSalidaRef = updateData.fechaSalida || existingRuta.fechaSalida;
+        if (fechaSalidaRef) {
+          const salida = fechaSalidaRef instanceof Date ? fechaSalidaRef : new Date(fechaSalidaRef);
+          updateData.fechaLlegadaEstimada = new Date(salida.getTime() + distanceData.durationMinutes * 60000);
         }
       } catch (error) {
-        console.error("Error recalculando distancia:", error)
+        console.error("Error recalculando distancia:", error);
+        const errorMessage = error instanceof Error ? error.message : "No se pudo recalcular la ruta.";
+        return NextResponse.json({ error: `Error con OpenStreetMap: ${errorMessage}` }, { status: 400 });
       }
     }
 
-    const [updatedRuta] = await db.update(rutas).set(updateData).where(eq(rutas.id, id)).returning()
+    const [updatedRuta] = await db.update(rutas).set(updateData).where(eq(rutas.id, id)).returning();
 
     if (!updatedRuta) {
-      return NextResponse.json({ error: "Ruta no encontrada" }, { status: 404 })
+      return NextResponse.json({ error: "Ruta no encontrada para actualizar" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedRuta)
+    return NextResponse.json(updatedRuta);
   } catch (error) {
-    console.error("Error actualizando ruta:", error)
-    return NextResponse.json({ error: "Error al actualizar la ruta" }, { status: 500 })
+    console.error("Error actualizando ruta:", error);
+    return NextResponse.json({ error: "Error al actualizar la ruta" }, { status: 500 });
   }
 }
 
 // DELETE - Eliminar ruta
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get("id")
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "ID de ruta es requerido" }, { status: 400 })
+      return NextResponse.json({ error: "ID de ruta es requerido" }, { status: 400 });
     }
 
-    await db.delete(rutas).where(eq(rutas.id, id))
+    const result = await db.delete(rutas).where(eq(rutas.id, id)).returning();
+    
+    if (result.length === 0) {
+        return NextResponse.json({ error: "Ruta no encontrada para eliminar" }, { status: 404 });
+    }
 
-    return NextResponse.json({ message: "Ruta eliminada exitosamente" })
+    return NextResponse.json({ message: "Ruta eliminada exitosamente" });
   } catch (error) {
-    console.error("Error eliminando ruta:", error)
-    return NextResponse.json({ error: "Error al eliminar la ruta" }, { status: 500 })
+    console.error("Error eliminando ruta:", error);
+    return NextResponse.json({ error: "Error al eliminar la ruta" }, { status: 500 });
   }
 }
