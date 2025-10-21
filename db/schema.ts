@@ -162,6 +162,61 @@ export const mantenimientos = pgTable("mantenimientos", {
   actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
 })
 
+// Tabla de conductores
+export const conductores = pgTable("conductores", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  nombre: text("nombre").notNull(),
+  apellido: text("apellido").notNull(),
+  ci: text("ci").notNull().unique(), // Cédula de identidad
+  licencia: text("licencia").notNull(),
+  categoria: text("categoria").notNull(), // A, B, C, etc.
+  vencimientoLicencia: timestamp("vencimiento_licencia").notNull(),
+  telefono: text("telefono"),
+  direccion: text("direccion"),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
+// Tabla de documentos de conductor
+export const documentosConductor = pgTable("documentos_conductor", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  conductorId: text("conductor_id")
+    .references(() => conductores.id, { onDelete: "cascade" })
+    .notNull(),
+
+  // Tipo de documento
+  tipoDocumento: text("tipo_documento").notNull(), // carnet_identidad, licencia_conducir, croquis_casa, contrato, firma, otro
+
+  // Información del archivo
+  nombreArchivo: text("nombre_archivo").notNull(),
+  urlArchivo: text("url_archivo").notNull(),
+  tipoArchivo: text("tipo_archivo").notNull(), // image/jpeg, application/pdf, etc.
+  tamanoBytes: numeric("tamano_bytes"),
+
+  // Estado de validación
+  validado: boolean("validado").default(false),
+  validadoPor: text("validado_por").references(() => users.id),
+  fechaValidacion: timestamp("fecha_validacion"),
+  observacionesValidacion: text("observaciones_validacion"),
+
+  // Metadatos adicionales
+  descripcion: text("descripcion"),
+  fechaEmision: timestamp("fecha_emision"),
+  fechaVencimiento: timestamp("fecha_vencimiento"),
+
+  // Auditoría
+  subidoPor: text("subido_por").references(() => users.id),
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -180,3 +235,9 @@ export type NewRuta = typeof rutas.$inferInsert
 
 export type Mantenimiento = typeof mantenimientos.$inferSelect
 export type NewMantenimiento = typeof mantenimientos.$inferInsert
+
+export type Conductor = typeof conductores.$inferSelect
+export type NewConductor = typeof conductores.$inferInsert
+
+export type DocumentoConductor = typeof documentosConductor.$inferSelect
+export type NewDocumentoConductor = typeof documentosConductor.$inferInsert
