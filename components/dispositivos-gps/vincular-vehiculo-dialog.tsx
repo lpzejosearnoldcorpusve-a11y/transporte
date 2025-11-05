@@ -49,9 +49,9 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Vincular Dispositivo GPS</DialogTitle>
-            <div className="text-sm text-muted-foreground mt-1">
+          <div className="text-sm text-muted-foreground mt-1">
             Vincula el dispositivo {dispositivo?.imei} a un vehículo para comenzar el seguimiento
-            </div>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,36 +62,17 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               </div>
             ) : (
-              <Select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)} required>
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="w-full border rounded px-3 py-2 text-left bg-white"
-                    disabled={loading}
-                  >
-                    {vehiculoId
-                      ? vehiculosDisponibles.find((v) => v.id === vehiculoId)?.placa +
-                        " - " +
-                        vehiculosDisponibles.find((v) => v.id === vehiculoId)?.marca
-                      : "Selecciona un vehículo"}
-                  </button>
-                </div>
-                <ul className="absolute z-10 w-full bg-white border rounded shadow mt-1 max-h-60 overflow-auto">
-                  {vehiculosDisponibles.map((vehiculo) => (
-                    <li
-                      key={vehiculo.id}
-                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-                        vehiculoId === vehiculo.id ? "bg-gray-200" : ""
-                      }`}
-                      onClick={() => setVehiculoId(vehiculo.id)}
-                      tabIndex={0}
-                      role="option"
-                      aria-selected={vehiculoId === vehiculo.id}
-                    >
-                      {vehiculo.placa} - {vehiculo.marca}
-                    </li>
-                  ))}
-                </ul>
+              <Select 
+                value={vehiculoId} 
+                onChange={(e) => setVehiculoId(e.target.value)} 
+                required
+              >
+                <option value="">Selecciona un vehículo</option>
+                {vehiculosDisponibles.map((vehiculo) => (
+                  <option key={vehiculo.id} value={vehiculo.id}>
+                    {vehiculo.placa} - {vehiculo.marca}
+                  </option>
+                ))}
               </Select>
             )}
             {vehiculosDisponibles.length === 0 && !loading && (
