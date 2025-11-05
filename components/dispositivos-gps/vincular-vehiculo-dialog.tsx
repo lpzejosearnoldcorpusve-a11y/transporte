@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DialogDescription } from "@radix-ui/react-dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
@@ -25,7 +24,7 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
   const [fechaInstalacion, setFechaInstalacion] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { vehiculos, loading: isLoading } = useVehiculos()
+  const { vehiculos, loading } = useVehiculos()
 
   // Filtrar solo vehículos sin GPS
   const vehiculosDisponibles = vehiculos.filter((v) => !v.gpsActivo)
@@ -50,35 +49,52 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Vincular Dispositivo GPS</DialogTitle>
-          <DialogDescription>
+            <div className="text-sm text-muted-foreground mt-1">
             Vincula el dispositivo {dispositivo?.imei} a un vehículo para comenzar el seguimiento
-          </DialogDescription>
+            </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="vehiculo">Vehículo</Label>
-            {isLoading ? (
+            {loading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               </div>
             ) : (
-              <select
-                id="vehiculo"
-                value={vehiculoId}
-                onChange={(e) => setVehiculoId(e.target.value)}
-                required
-                className="w-full rounded-md border border-gray-300 p-2"
-              >
-                <option value="">Selecciona un vehículo</option>
-                {vehiculosDisponibles.map((vehiculo) => (
-                  <option key={vehiculo.id} value={vehiculo.id}>
-                    {vehiculo.placa} - {vehiculo.marca}
-                  </option>
-                ))}
-              </select>
+              <Select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)} required>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="w-full border rounded px-3 py-2 text-left bg-white"
+                    disabled={loading}
+                  >
+                    {vehiculoId
+                      ? vehiculosDisponibles.find((v) => v.id === vehiculoId)?.placa +
+                        " - " +
+                        vehiculosDisponibles.find((v) => v.id === vehiculoId)?.marca
+                      : "Selecciona un vehículo"}
+                  </button>
+                </div>
+                <ul className="absolute z-10 w-full bg-white border rounded shadow mt-1 max-h-60 overflow-auto">
+                  {vehiculosDisponibles.map((vehiculo) => (
+                    <li
+                      key={vehiculo.id}
+                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 ${
+                        vehiculoId === vehiculo.id ? "bg-gray-200" : ""
+                      }`}
+                      onClick={() => setVehiculoId(vehiculo.id)}
+                      tabIndex={0}
+                      role="option"
+                      aria-selected={vehiculoId === vehiculo.id}
+                    >
+                      {vehiculo.placa} - {vehiculo.marca}
+                    </li>
+                  ))}
+                </ul>
+              </Select>
             )}
-            {vehiculosDisponibles.length === 0 && !isLoading && (
+            {vehiculosDisponibles.length === 0 && !loading && (
               <p className="text-sm text-gray-500">No hay vehículos disponibles sin GPS</p>
             )}
           </div>
