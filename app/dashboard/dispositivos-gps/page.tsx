@@ -7,17 +7,25 @@ import { DispositivosGrid } from "@/components/dispositivos-gps/dispositivos-gri
 import { DispositivosActivosStats } from "@/components/dispositivos-gps/dispositivos-activos-stats"
 import { VincularVehiculoDialog } from "@/components/dispositivos-gps/vincular-vehiculo-dialog"
 import { DispositivoConfigDialog } from "@/components/dispositivos-gps/dispositivo-config-dialog"
+import { DispositivoFormDialog } from "@/components/dispositivos-gps/dispositivo-form-dialog"
 import { useDispositivosGps } from "@/hooks/use-dispositivos-gps"
 import { useDispositivoGpsMutations } from "@/hooks/use-dispositivo-gps-mutations"
-import type { DispositivoConVehiculo } from "@/types/dispositivo-gps"
+import type { DispositivoConVehiculo, DispositivoFormData } from "@/types/dispositivo-gps"
 
 export default function DispositivosGpsPage() {
   const { dispositivos, isLoading, mutate } = useDispositivosGps()
-  const { vincularVehiculo, desvincularVehiculo, actualizarDispositivo } = useDispositivoGpsMutations()
+  const { crearDispositivo, vincularVehiculo, desvincularVehiculo, actualizarDispositivo } =
+    useDispositivoGpsMutations()
 
+  const [crearDialogOpen, setCrearDialogOpen] = useState(false)
   const [vincularDialogOpen, setVincularDialogOpen] = useState(false)
   const [configDialogOpen, setConfigDialogOpen] = useState(false)
   const [dispositivoSeleccionado, setDispositivoSeleccionado] = useState<DispositivoConVehiculo | null>(null)
+
+  const handleCrearDispositivo = async (data: DispositivoFormData) => {
+    await crearDispositivo(data)
+    mutate()
+  }
 
   const handleVincular = (dispositivo: DispositivoConVehiculo) => {
     setDispositivoSeleccionado(dispositivo)
@@ -53,7 +61,7 @@ export default function DispositivosGpsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Dispositivos GPS</h1>
           <p className="text-gray-600">Gestiona y vincula dispositivos GPS con vehículos</p>
         </div>
-        <Button>
+        <Button onClick={() => setCrearDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Registrar Dispositivo
         </Button>
@@ -67,6 +75,12 @@ export default function DispositivosGpsPage() {
         onVincular={handleVincular}
         onDesvincular={handleDesvincular}
         onConfig={handleConfig}
+      />
+
+      <DispositivoFormDialog
+        open={crearDialogOpen}
+        onOpenChange={setCrearDialogOpen}
+        onSubmit={handleCrearDispositivo}
       />
 
       <VincularVehiculoDialog
