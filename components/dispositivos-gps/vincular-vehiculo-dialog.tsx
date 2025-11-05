@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -16,7 +15,7 @@ interface VincularVehiculoDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   dispositivo: DispositivoConVehiculo | null
-  onVincular: (dispositivoId: string, vehiculoId: string, fechaInstalacion?: Date) => Promise<void>
+  onVincular: (imei: string, vehiculoId: string, fechaInstalacion?: Date) => Promise<void>
 }
 
 export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVincular }: VincularVehiculoDialogProps) {
@@ -35,7 +34,13 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
 
     setIsSubmitting(true)
     try {
-      await onVincular(dispositivo.id, vehiculoId, fechaInstalacion ? new Date(fechaInstalacion) : undefined)
+      // Aquí enviamos el IMEI en lugar del id
+      await onVincular(
+        dispositivo.imei,
+        vehiculoId,
+        fechaInstalacion ? new Date(fechaInstalacion) : undefined
+      )
+
       onOpenChange(false)
       setVehiculoId("")
       setFechaInstalacion("")
