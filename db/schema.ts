@@ -217,6 +217,74 @@ export const documentosConductor = pgTable("documentos_conductor", {
   actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
 })
 
+// Tabla de tracking GPS
+export const gpsTracking = pgTable("gps_tracking", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  vehiculoId: text("vehiculo_id")
+    .references(() => vehiculos.id)
+    .notNull(),
+
+  // Datos GPS
+  latitud: numeric("latitud").notNull(),
+  longitud: numeric("longitud").notNull(),
+  altitud: numeric("altitud"), // en metros
+  satelites: numeric("satelites"), // número de satélites
+  velocidad: numeric("velocidad"), // km/h
+  direccion: numeric("direccion"), // grados (0-360)
+
+  // Estado del vehículo
+  estadoMotor: text("estado_motor").default("encendido"), // encendido, apagado
+  nivelCombustible: numeric("nivel_combustible"), // porcentaje
+
+  // Timestamp
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+
+  // Metadatos
+  precision: numeric("precision"), // precisión en metros
+  proveedor: text("proveedor").default("gps"), // gps, network, etc.
+})
+
+// Tabla de dispositivos GPS
+export const dispositivosGps = pgTable("dispositivos_gps", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  // Identificación del dispositivo
+  imei: text("imei").notNull().unique(), // Identificador único del dispositivo
+  modelo: text("modelo"),
+  fabricante: text("fabricante"),
+  numeroSerie: text("numero_serie"),
+
+  // Vinculación con vehículo
+  vehiculoId: text("vehiculo_id").references(() => vehiculos.id),
+
+  // Estado del dispositivo
+  estado: text("estado").default("activo"), // activo, inactivo, mantenimiento
+  conectado: boolean("conectado").default(false),
+
+  // Última comunicación
+  ultimaSenal: timestamp("ultima_senal"),
+  ultimaLatitud: numeric("ultima_latitud"),
+  ultimaLongitud: numeric("ultima_longitud"),
+
+  // Configuración
+  intervaloReporte: numeric("intervalo_reporte").default("30"), // segundos
+  alertaVelocidad: numeric("alerta_velocidad"), // km/h
+  alertaCombustible: numeric("alerta_combustible"), // porcentaje
+
+  // Metadatos
+  fechaInstalacion: timestamp("fecha_instalacion"),
+  fechaActivacion: timestamp("fecha_activacion"),
+  observaciones: text("observaciones"),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -241,3 +309,9 @@ export type NewConductor = typeof conductores.$inferInsert
 
 export type DocumentoConductor = typeof documentosConductor.$inferSelect
 export type NewDocumentoConductor = typeof documentosConductor.$inferInsert
+
+export type GpsTracking = typeof gpsTracking.$inferSelect
+export type NewGpsTracking = typeof gpsTracking.$inferInsert
+
+export type DispositivoGps = typeof dispositivosGps.$inferSelect
+export type NewDispositivoGps = typeof dispositivosGps.$inferInsert

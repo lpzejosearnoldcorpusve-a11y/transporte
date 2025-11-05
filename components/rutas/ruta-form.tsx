@@ -188,17 +188,16 @@ export function RutaForm({ ruta, onSubmit, onCancel }: RutaFormProps) {
           </Select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="space-y-2">
             <Label>Origen *</Label>
             <Button
               type="button"
               variant="outline"
               onClick={() => setShowOrigenPicker(true)}
-              className="w-full justify-start text-left font-normal"
+              className="w-full justify-start text-left font-normal overflow-hidden"
             >
-              <MapPin className="mr-2 h-4 w-4 text-forest-green-500" />
-              {formData.origen || "Seleccionar en mapa"}
+              <MapPin className="mr-2 h-4 w-4 flex-shrink-0 text-forest-green-500" />
+              <span className="truncate">{formData.origen || "Seleccionar en mapa"}</span>
             </Button>
           </div>
 
@@ -208,13 +207,12 @@ export function RutaForm({ ruta, onSubmit, onCancel }: RutaFormProps) {
               type="button"
               variant="outline"
               onClick={() => setShowDestinoPicker(true)}
-              className="w-full justify-start text-left font-normal"
+              className="w-full justify-start text-left font-normal overflow-hidden"
             >
-              <Navigation className="mr-2 h-4 w-4 text-vibrant-orange-500" />
-              {formData.destino || "Seleccionar en mapa"}
+              <Navigation className="mr-2 h-4 w-4 flex-shrink-0 text-vibrant-orange-500" />
+              <span className="truncate">{formData.destino || "Seleccionar en mapa"}</span>
             </Button>
           </div>
-        </div>
 
         {(routeData.origenLat && routeData.destinoLat) && (
           <Button
