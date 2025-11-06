@@ -5,8 +5,8 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select" // Tu componente personalizado
 import type { DispositivoConVehiculo } from "@/types/dispositivo-gps"
 import { useVehiculos } from "@/hooks/use-vehiculos"
 import { Loader2 } from "lucide-react"
@@ -30,20 +30,40 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dispositivo || !vehiculoId) return
+    
+    // DEBUG: Verificar valores antes de enviar
+    console.log("🔍 Valores del formulario:", {
+      dispositivo: dispositivo?.imei,
+      vehiculoId,
+      fechaInstalacion
+    })
+
+    if (!dispositivo || !vehiculoId) {
+      console.error("❌ Faltan datos requeridos:", { 
+        dispositivo: !!dispositivo, 
+        vehiculoId: !!vehiculoId 
+      })
+      return
+    }
 
     setIsSubmitting(true)
     try {
-      // Aquí enviamos el IMEI en lugar del id
+      console.log("🚀 Iniciando vinculación...")
+      
       await onVincular(
         dispositivo.imei,
         vehiculoId,
         fechaInstalacion ? new Date(fechaInstalacion) : undefined
       )
 
+      console.log("✅ Vinculación exitosa")
+      
       onOpenChange(false)
       setVehiculoId("")
       setFechaInstalacion("")
+    } catch (error) {
+      console.error("💥 Error en la vinculación:", error)
+      // Puedes mostrar un toast de error aquí
     } finally {
       setIsSubmitting(false)
     }
@@ -55,21 +75,24 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
         <DialogHeader>
           <DialogTitle>Vincular Dispositivo GPS</DialogTitle>
           <div className="text-sm text-muted-foreground mt-1">
-            Vincula el dispositivo {dispositivo?.imei} a un vehículo para comenzar el seguimiento
+            Vincula el dispositivo <strong>{dispositivo?.imei}</strong> a un vehículo para comenzar el seguimiento
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="vehiculo">Vehículo</Label>
+            <Label htmlFor="vehiculo">Vehículo *</Label>
             {loading ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               </div>
             ) : (
-              <Select 
-                value={vehiculoId} 
-                onChange={(e) => setVehiculoId(e.target.value)} 
+              <Select
+                value={vehiculoId}
+                onChange={(e) => {
+                  console.log("🚗 Vehículo seleccionado:", e.target.value)
+                  setVehiculoId(e.target.value)
+                }}
                 required
               >
                 <option value="">Selecciona un vehículo</option>
@@ -96,10 +119,21 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                console.log("❌ Cancelando vinculación")
+                onOpenChange(false)
+              }} 
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!vehiculoId || isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={!vehiculoId || isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
