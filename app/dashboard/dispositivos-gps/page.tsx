@@ -45,7 +45,7 @@ export default function DispositivosGpsPage() {
   }
 
   const handleVincularSubmit = async (dispositivoId: string, vehiculoId: string, fechaInstalacion?: Date) => {
-    await vincularVehiculo({ dispositivoId, vehiculoId, fechaInstalacion })
+    await vincularVehiculo({ imei: dispositivoId, vehiculoId, fechaInstalacion })
     mutate()
   }
 
