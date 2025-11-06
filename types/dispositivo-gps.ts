@@ -39,10 +39,11 @@ export interface DispositivoFormData {
   observaciones?: string
 }
 
+
 export interface VincularVehiculoData {
-  dispositivoId: string
-  vehiculoId: string
-  fechaInstalacion?: Date
+  imei: string;           
+  vehiculoId: string;
+  fechaInstalacion?: Date;
 }
 
 export type EstadoDispositivo = "activo" | "inactivo" | "mantenimiento"

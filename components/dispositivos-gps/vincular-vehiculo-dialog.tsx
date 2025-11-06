@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select" // Tu componente personalizado
+import { Select } from "@/components/ui/select" 
 import type { DispositivoConVehiculo } from "@/types/dispositivo-gps"
 import { useVehiculos } from "@/hooks/use-vehiculos"
 import { Loader2 } from "lucide-react"
@@ -63,7 +63,7 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
       setFechaInstalacion("")
     } catch (error) {
       console.error("💥 Error en la vinculación:", error)
-      // Puedes mostrar un toast de error aquí
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -75,7 +75,7 @@ export function VincularVehiculoDialog({ open, onOpenChange, dispositivo, onVinc
         <DialogHeader>
           <DialogTitle>Vincular Dispositivo GPS</DialogTitle>
           <div className="text-sm text-muted-foreground mt-1">
-            Vincula el dispositivo <strong>{dispositivo?.imei}</strong> a un vehículo para comenzar el seguimiento
+            Vincula el dispositivo <strong>{dispositivo?.imei}</strong> 
           </div>
         </DialogHeader>
 
