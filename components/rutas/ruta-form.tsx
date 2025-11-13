@@ -160,7 +160,10 @@ export function RutaForm({ ruta, onSubmit, onCancel }: RutaFormProps) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form 
+        onSubmit={handleSubmit} 
+        className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-4"
+      >
         <div className="space-y-2">
           <Label htmlFor="nombre">Nombre de la Ruta *</Label>
           <Input
@@ -189,30 +192,30 @@ export function RutaForm({ ruta, onSubmit, onCancel }: RutaFormProps) {
         </div>
 
         <div className="space-y-2">
-            <Label>Origen *</Label>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowOrigenPicker(true)}
-              className="w-full justify-start text-left font-normal overflow-hidden"
-            >
-              <MapPin className="mr-2 h-4 w-4 flex-shrink-0 text-forest-green-500" />
-              <span className="truncate">{formData.origen || "Seleccionar en mapa"}</span>
-            </Button>
-          </div>
+          <Label>Origen *</Label>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowOrigenPicker(true)}
+            className="w-full justify-start text-left font-normal overflow-hidden"
+          >
+            <MapPin className="mr-2 h-4 w-4 flex-shrink-0 text-forest-green-500" />
+            <span className="truncate">{formData.origen || "Seleccionar en mapa"}</span>
+          </Button>
+        </div>
 
-          <div className="space-y-2">
-            <Label>Destino *</Label>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowDestinoPicker(true)}
-              className="w-full justify-start text-left font-normal overflow-hidden"
-            >
-              <Navigation className="mr-2 h-4 w-4 flex-shrink-0 text-vibrant-orange-500" />
-              <span className="truncate">{formData.destino || "Seleccionar en mapa"}</span>
-            </Button>
-          </div>
+        <div className="space-y-2">
+          <Label>Destino *</Label>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowDestinoPicker(true)}
+            className="w-full justify-start text-left font-normal overflow-hidden"
+          >
+            <Navigation className="mr-2 h-4 w-4 flex-shrink-0 text-vibrant-orange-500" />
+            <span className="truncate">{formData.destino || "Seleccionar en mapa"}</span>
+          </Button>
+        </div>
 
         {(routeData.origenLat && routeData.destinoLat) && (
           <Button
@@ -270,7 +273,7 @@ export function RutaForm({ ruta, onSubmit, onCancel }: RutaFormProps) {
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
+        <div className="flex justify-end gap-2 pt-4 sticky bottom-0 bg-background pb-2 border-t pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
