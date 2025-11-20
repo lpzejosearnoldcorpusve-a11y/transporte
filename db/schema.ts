@@ -285,6 +285,62 @@ export const dispositivosGps = pgTable("dispositivos_gps", {
   actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
 })
 
+// Tabla de viajes
+export const viajes = pgTable("viajes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  // Vinculaciones
+  vehiculoId: text("vehiculo_id")
+    .references(() => vehiculos.id)
+    .notNull(),
+  conductorId: text("conductor_id")
+    .references(() => conductores.id)
+    .notNull(),
+  rutaId: text("ruta_id").references(() => rutas.id),
+
+  // Información del viaje
+  numeroViaje: text("numero_viaje").notNull().unique(),
+  numeroFactura: text("numero_factura"),
+  producto: text("producto").notNull(), // Tipo de hidrocarburos
+  cantidad: numeric("cantidad").notNull(), // Litros
+  unidad: text("unidad").default("litros"),
+
+  // Lugares
+  lugarCarga: text("lugar_carga").notNull(),
+  lugarDescarga: text("lugar_descarga").notNull(),
+
+  // Coordenadas
+  lugarCargaLat: numeric("lugar_carga_lat"),
+  lugarCargaLng: numeric("lugar_carga_lng"),
+  lugarDescargaLat: numeric("lugar_descarga_lat"),
+  lugarDescargaLng: numeric("lugar_descarga_lng"),
+
+  // Fechas y tiempos
+  fechaInicio: timestamp("fecha_inicio").notNull(),
+  horaInicio: text("hora_inicio"),
+  fechaFin: timestamp("fecha_fin"),
+  horaFin: text("hora_fin"),
+  fechaEstimadaLlegada: timestamp("fecha_estimada_llegada"),
+
+  // Estado del viaje
+  estado: text("estado").default("planificado"), // planificado, en_transito, completado, cancelado
+
+  // Información adicional
+  observaciones: text("observaciones"),
+  referencia: text("referencia"), // Cliente, proyecto, etc.
+
+  // Datos para PDF y QR
+  codigoQr: text("codigo_qr"), // URL o contenido del QR
+  urlHojaRuta: text("url_hoja_ruta"),
+
+  // Auditoría
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+  creadoPor: text("creado_por").references(() => users.id),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -315,3 +371,6 @@ export type NewGpsTracking = typeof gpsTracking.$inferInsert
 
 export type DispositivoGps = typeof dispositivosGps.$inferSelect
 export type NewDispositivoGps = typeof dispositivosGps.$inferInsert
+
+export type Viaje = typeof viajes.$inferSelect
+export type NewViaje = typeof viajes.$inferInsert
