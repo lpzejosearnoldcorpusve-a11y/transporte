@@ -19,7 +19,7 @@ export function ConductoresTable({ conductores, onEdit, onDelete }: ConductoresT
     const diasRestantes = differenceInDays(fecha, new Date())
 
     if (diasRestantes < 0) {
-      return { label: "Vencida", variant: "danger" as const } // Cambiado de "destructive" a "danger"
+      return { label: "Vencida", variant: "danger" as const }
     } else if (diasRestantes <= 30) {
       return { label: "Por vencer", variant: "warning" as const }
     }
@@ -59,7 +59,7 @@ export function ConductoresTable({ conductores, onEdit, onDelete }: ConductoresT
                   <TableCell>{conductor.ci}</TableCell>
                   <TableCell>{conductor.licencia}</TableCell>
                   <TableCell>
-                    <Badge variant="default">{conductor.categoria}</Badge> {/* Cambiado de "outline" a "default" */}
+                    <Badge variant="default">{conductor.categoria}</Badge> 
                   </TableCell>
                   <TableCell>
                     {format(new Date(conductor.vencimientoLicencia), "dd/MM/yyyy", {

@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { RutasTable } from "@/components/rutas/rutas-table"
 import { RutaFormDialog } from "@/components/rutas/ruta-form-dialog"
+import { RutasEstadisticas } from "@/components/rutas/rutas-estadisticas"
+import { RutasReporteEficiencia } from "@/components/rutas/rutas-reporte-eficiencia"
 import { useRutas } from "@/hooks/use-rutas"
 import { useRutaMutations } from "@/hooks/use-ruta-mutations"
 import { useToast } from "@/hooks/use-toast"
 import type { Ruta, RutaFormData } from "@/types/ruta"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function RutasPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -34,7 +37,7 @@ export default function RutasPage() {
         await createRuta(data)
         toast({
           title: "Ruta creada",
-          description: "La ruta se creó correctamente con datos de Google Maps",
+          description: "La ruta se creó correctamente",
         })
       }
     } catch (error) {
@@ -83,13 +86,31 @@ export default function RutasPage() {
           <h1 className="text-3xl font-bold text-gray-900">Rutas</h1>
           <p className="text-gray-600">Gestiona las rutas de transporte</p>
         </div>
-        <Button onClick={handleNewRuta} className="bg-vibrant-orange-500 hover:bg-vibrant-orange-600">
+        <Button onClick={handleNewRuta} className="bg-vibrant-orange-500 hover:bg-vibrant-orange-600 shadow-lg">
           <Plus className="mr-2 h-4 w-4" />
           Nueva Ruta
         </Button>
       </div>
 
-      <RutasTable rutas={rutas} onEdit={handleEdit} onDelete={handleDelete} />
+      <Tabs defaultValue="gestion" className="w-full">
+        <TabsList>
+          <TabsTrigger value="gestion">Gestión</TabsTrigger>
+          <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+          <TabsTrigger value="eficiencia">Reporte de Eficiencia</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="gestion" className="space-y-4">
+          <RutasTable rutas={rutas} onEdit={handleEdit} onDelete={handleDelete} />
+        </TabsContent>
+
+        <TabsContent value="estadisticas">
+          <RutasEstadisticas rutas={rutas} />
+        </TabsContent>
+
+        <TabsContent value="eficiencia">
+          <RutasReporteEficiencia rutas={rutas} />
+        </TabsContent>
+      </Tabs>
 
       <RutaFormDialog open={dialogOpen} onOpenChange={setDialogOpen} ruta={selectedRuta} onSubmit={handleSubmit} />
     </div>

@@ -8,10 +8,6 @@ export interface RouteResult {
   geometry: Array<[number, number]>
 }
 
-/**
- * Geocodifica una dirección usando Nominatim (servicio de geocoding de OpenStreetMap)
- * Es gratuito y no requiere API key
- */
 export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
@@ -38,13 +34,8 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   }
 }
 
-/**
- * Calcula la distancia y duración de una ruta usando OSRM (Open Source Routing Machine)
- * Es gratuito y no requiere API key
- */
 export async function calculateRouteDistance(origen: string, destino: string): Promise<RouteResult> {
   try {
-    // Primero geocodificar origen y destino
     const [origenGeo, destinoGeo] = await Promise.all([geocodeAddress(origen), geocodeAddress(destino)])
 
     const routeUrl = `https://router.project-osrm.org/route/v1/driving/${origenGeo.lng},${origenGeo.lat};${destinoGeo.lng},${destinoGeo.lat}?overview=full&geometries=geojson`
@@ -75,9 +66,6 @@ export async function calculateRouteDistance(origen: string, destino: string): P
   }
 }
 
-/**
- * Calcula ruta usando coordenadas directamente (sin geocodificación)
- */
 export async function calculateRouteFromCoordinates(
   origenLat: number,
   origenLng: number,
@@ -113,9 +101,6 @@ export async function calculateRouteFromCoordinates(
   }
 }
 
-/**
- * Obtiene la ubicación actual del usuario usando la API de Geolocation del navegador
- */
 export async function getCurrentLocation(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -137,12 +122,8 @@ export async function getCurrentLocation(): Promise<{ lat: number; lng: number }
   })
 }
 
-/**
- * Calcula la distancia entre dos puntos usando la fórmula de Haversine
- * Útil para cálculos rápidos sin necesidad de API
- */
 export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): { distanceKm: number } {
-  const R = 6371 // Radio de la Tierra en km
+  const R = 6371 
   const dLat = toRad(lat2 - lat1)
   const dLng = toRad(lng2 - lng1)
 

@@ -7,10 +7,6 @@ import type { VehiculoTracking } from "@/types/gps-tracking"
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export function useGpsTracking(refreshInterval = 5000) {
-  // ❌ VIEJO - con since que no funciona
-  // const { data, error, isLoading, mutate } = useSWR(`/api/gps/positions?since=${lastUpdate}`, ...)
-
-  // ✅ NUEVO - sin since
   const { data, error, isLoading, mutate } = useSWR<{
     success: boolean
     data: VehiculoTracking[]

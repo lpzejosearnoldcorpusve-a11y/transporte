@@ -1,331 +1,479 @@
 import { db } from "@/db/index"
-import { viajes, vehiculos, conductores, rutas } from "@/db/schema" // 👈 Agrega rutas
+import { viajes, vehiculos, conductores, rutas } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { type NextRequest, NextResponse } from "next/server"
 import jsPDF from "jspdf"
 import QRCode from "qrcode"
 
-export async function POST(request: NextRequest) {
-  console.log("📥 [PDF] Solicitud recibida para generar PDF")
+// Interfaz para datos validados
+interface ViajeCompleto {
+  viaje: typeof viajes.$inferSelect
+  vehiculo: typeof vehiculos.$inferSelect | null
+  conductor: typeof conductores.$inferSelect | null
+  ruta: typeof rutas.$inferSelect | null
+}
+
+// Validación de coordenadas
+function validarCoordenadas(lat: number | null, lng: number | null): boolean {
+  if (lat === null || lng === null) return false
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+}
+
+// Generar URL de mapa con validación
+function generarURLMapa(
+  origenLat: number,
+  origenLng: number,
+  destinoLat: number,
+  destinoLng: number
+): string {
+  // Validar coordenadas antes de generar URL
+  if (!validarCoordenadas(origenLat, origenLng) || !validarCoordenadas(destinoLat, destinoLng)) {
+    throw new Error("Coordenadas inválidas")
+  }
+
+  // URL de Google Maps (más compatible y usado)
+  const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origenLat},${origenLng}&destination=${destinoLat},${destinoLng}&travelmode=driving`
+  
+  return googleMapsUrl
+}
+
+// Formatear fecha de manera segura
+function formatearFecha(fecha: string | Date | null): string {
+  if (!fecha) return "No especificada"
   
   try {
-    // Verificar que el body existe
+    const fechaObj = typeof fecha === 'string' ? new Date(fecha) : fecha
+    if (isNaN(fechaObj.getTime())) return "Fecha inválida"
+    
+    return fechaObj.toLocaleString("es-BO", {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return "Error en formato de fecha"
+  }
+}
+
+// Función para dibujar header con estilo
+function dibujarHeader(pdf: jsPDF, numeroViaje: string, pageWidth: number): number {
+  let y = 15
+  
+  // Fondo del header
+  pdf.setFillColor(20, 70, 50)
+  pdf.rect(0, 0, pageWidth, 35, 'F')
+  
+  // Título principal
+  pdf.setTextColor(255, 255, 255)
+  pdf.setFontSize(28)
+  pdf.setFont('helvetica', 'bold')
+  pdf.text("HOJA DE RUTA", pageWidth / 2, y + 8, { align: "center" })
+  
+  // Número de viaje
+  pdf.setFontSize(14)
+  pdf.setFont('helvetica', 'normal')
+  pdf.text(`N° ${numeroViaje}`, pageWidth / 2, y + 18, { align: "center" })
+  
+  return 45
+}
+
+// Función para dibujar sección con estilo
+function dibujarSeccion(
+  pdf: jsPDF,
+  titulo: string,
+  y: number,
+  pageWidth: number,
+  pageHeight: number
+): number {
+  if (y + 15 > pageHeight - 20) {
+    pdf.addPage()
+    y = 20
+  }
+  
+  // Línea superior
+  pdf.setDrawColor(20, 70, 50)
+  pdf.setLineWidth(0.5)
+  pdf.line(15, y, pageWidth - 15, y)
+  y += 5
+  
+  // Título de sección
+  pdf.setFontSize(13)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(20, 70, 50)
+  pdf.text(titulo, 20, y)
+  y += 8
+  
+  return y
+}
+
+// Función para agregar campo con etiqueta
+function agregarCampo(
+  pdf: jsPDF,
+  etiqueta: string,
+  valor: string,
+  x: number,
+  y: number,
+  pageWidth: number,
+  pageHeight: number
+): number {
+  if (y > pageHeight - 15) {
+    pdf.addPage()
+    y = 20
+  }
+  
+  // Etiqueta en negrita
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(10)
+  pdf.setTextColor(60, 60, 60)
+  pdf.text(`${etiqueta}:`, x, y)
+  
+  // Valor
+  pdf.setFont('helvetica', 'normal')
+  pdf.setTextColor(0, 0, 0)
+  const etiquetaWidth = pdf.getTextWidth(`${etiqueta}: `)
+  const valorLines = pdf.splitTextToSize(valor, pageWidth - x - etiquetaWidth - 20)
+  pdf.text(valorLines, x + etiquetaWidth, y)
+  
+  return y + (valorLines.length * 5)
+}
+
+export async function POST(request: NextRequest) {
+  console.log("📥 [PDF] Solicitud recibida")
+  
+  try {
+    // ========== VALIDACIÓN DEL REQUEST ==========
     if (!request.body) {
-      console.error("❌ [PDF] Request body está vacío")
+      console.error("❌ Body vacío")
       return NextResponse.json(
         { error: "Solicitud vacía" },
         { status: 400 }
       )
     }
 
-    let body;
+    let body: { viajeId?: unknown }
     try {
       body = await request.json()
-      console.log("📦 [PDF] Body recibido:", body)
-    } catch (jsonError) {
-      console.error("❌ [PDF] Error parseando JSON:", jsonError)
+    } catch {
       return NextResponse.json(
         { error: "JSON inválido" },
         { status: 400 }
       )
     }
 
-    const { viajeId } = body
-
     // Validar viajeId
-    if (!viajeId) {
-      console.error("❌ [PDF] viajeId no proporcionado")
+    const { viajeId } = body
+    if (!viajeId || typeof viajeId !== 'string' || viajeId.trim() === '') {
       return NextResponse.json(
-        { error: "viajeId es requerido" },
-        { status: 400 }
-      )
-    }
-
-    if (typeof viajeId !== 'string' || viajeId.trim() === '') {
-      console.error("❌ [PDF] viajeId inválido:", viajeId)
-      return NextResponse.json(
-        { error: "viajeId debe ser un string válido" },
+        { error: "viajeId es requerido y debe ser un string válido" },
         { status: 400 }
       )
     }
 
     const trimmedViajeId = viajeId.trim()
-    console.log("🔍 [PDF] Buscando viaje:", trimmedViajeId)
+    console.log("🔍 Buscando viaje:", trimmedViajeId)
 
-    // Buscar datos del viaje INCLUYENDO la ruta
-    let viajeData;
+    // ========== CONSULTA A LA BASE DE DATOS ==========
+    let viajeData
     try {
       viajeData = await db
         .select()
         .from(viajes)
         .leftJoin(vehiculos, eq(viajes.vehiculoId, vehiculos.id))
         .leftJoin(conductores, eq(viajes.conductorId, conductores.id))
-        .leftJoin(rutas, eq(viajes.rutaId, rutas.id)) // 👈 NUEVO JOIN con rutas
+        .leftJoin(rutas, eq(viajes.rutaId, rutas.id))
         .where(eq(viajes.id, trimmedViajeId))
-
-      console.log("📊 [PDF] Datos del viaje encontrados:", viajeData.length)
     } catch (dbError) {
-      console.error("❌ [PDF] Error en consulta DB:", dbError)
+      console.error("❌ Error DB:", dbError)
       return NextResponse.json(
-        { error: "Error al buscar datos del viaje" },
+        { error: "Error al consultar la base de datos" },
         { status: 500 }
       )
     }
 
     if (!viajeData || viajeData.length === 0) {
-      console.error("❌ [PDF] Viaje no encontrado para ID:", trimmedViajeId)
       return NextResponse.json(
-        { error: "Viaje no encontrado" },
+        { error: `Viaje con ID ${trimmedViajeId} no encontrado` },
         { status: 404 }
       )
     }
 
-    const viaje = viajeData[0].viajes
-    const vehiculo = viajeData[0].vehiculos
-    const conductor = viajeData[0].conductores
-    const ruta = viajeData[0].rutas // 👈 Obtén los datos de la ruta
+    const datos: ViajeCompleto = {
+      viaje: viajeData[0].viajes,
+      vehiculo: viajeData[0].vehiculos,
+      conductor: viajeData[0].conductores,
+      ruta: viajeData[0].rutas
+    }
 
-    console.log("✅ [PDF] Viaje encontrado:", {
-      numeroViaje: viaje.numeroViaje,
-      producto: viaje.producto,
-      vehiculo: vehiculo?.placa || 'No asignado',
-      conductor: conductor?.nombre || 'No asignado',
-      tieneRuta: !!ruta,
-      rutaNombre: ruta?.nombre || 'Sin ruta'
-    })
-
-    // Validar datos mínimos requeridos para el PDF
-    if (!viaje.numeroViaje) {
-      console.error("❌ [PDF] Viaje sin número de viaje")
+    // Validar datos mínimos necesarios
+    if (!datos.viaje.numeroViaje) {
       return NextResponse.json(
         { error: "El viaje no tiene número asignado" },
         { status: 400 }
       )
     }
 
-    // Generar QR - PRIORIDAD: usar coordenadas de la RUTA
-    let qrDataUrl = '';
+    console.log("✅ Viaje encontrado:", {
+      numero: datos.viaje.numeroViaje,
+      producto: datos.viaje.producto,
+      tieneRuta: !!datos.ruta
+    })
+
+    // ========== GENERACIÓN DEL CÓDIGO QR ==========
+    let qrDataUrl = ''
+    let tipoMapa = 'ninguno'
+    
     try {
-      // PRIMERO intentar con coordenadas de la RUTA
-      if (ruta?.origenLat && ruta?.origenLng && ruta?.destinoLat && ruta?.destinoLng) {
-        const qrContent = `https://www.openstreetmap.org/?zoom=12&lat=${ruta.origenLat}&lon=${ruta.origenLng}&layers=N&route=${ruta.origenLat},${ruta.origenLng}|${ruta.destinoLat},${ruta.destinoLng}`
-        console.log("🎨 [PDF] Generando QR con coordenadas de la RUTA:", {
-          origen: `${ruta.origenLat}, ${ruta.origenLng}`,
-          destino: `${ruta.destinoLat}, ${ruta.destinoLng}`
-        })
-        qrDataUrl = await QRCode.toDataURL(qrContent)
-      } 
-      // SEGUNDO intentar con coordenadas del VIAJE
-      else if (viaje.lugarCargaLat && viaje.lugarCargaLng && viaje.lugarDescargaLat && viaje.lugarDescargaLng) {
-        const qrContent = `https://www.openstreetmap.org/?zoom=12&lat=${viaje.lugarCargaLat}&lon=${viaje.lugarCargaLng}&layers=N&route=${viaje.lugarCargaLat},${viaje.lugarCargaLng}|${viaje.lugarDescargaLat},${viaje.lugarDescargaLng}`
-        console.log("🎨 [PDF] Generando QR con coordenadas del VIAJE")
-        qrDataUrl = await QRCode.toDataURL(qrContent)
-      } 
-      // TERCERO: QR alternativo con información básica
+      // Prioridad 1: Coordenadas de la ruta
+      if (datos.ruta && 
+          validarCoordenadas(
+            datos.ruta.origenLat !== null ? Number(datos.ruta.origenLat) : null,
+            datos.ruta.origenLng !== null ? Number(datos.ruta.origenLng) : null
+          ) &&
+          validarCoordenadas(
+            datos.ruta.destinoLat !== null ? Number(datos.ruta.destinoLat) : null,
+            datos.ruta.destinoLng !== null ? Number(datos.ruta.destinoLng) : null
+          )) {
+        
+        const urlMapa = generarURLMapa(
+          datos.ruta.origenLat !== null ? Number(datos.ruta.origenLat) : 0,
+          datos.ruta.origenLng !== null ? Number(datos.ruta.origenLng) : 0,
+          datos.ruta.destinoLat !== null ? Number(datos.ruta.destinoLat) : 0,
+          datos.ruta.destinoLng !== null ? Number(datos.ruta.destinoLng) : 0
+        )
+        qrDataUrl = await QRCode.toDataURL(urlMapa, { width: 300, margin: 2 })
+        tipoMapa = 'ruta'
+        console.log("✅ QR generado con coordenadas de RUTA")
+      }
+      // Prioridad 2: Coordenadas del viaje
+      else if (
+        validarCoordenadas(
+          datos.viaje.lugarCargaLat !== null ? Number(datos.viaje.lugarCargaLat) : null,
+          datos.viaje.lugarCargaLng !== null ? Number(datos.viaje.lugarCargaLng) : null
+        ) &&
+        validarCoordenadas(
+          datos.viaje.lugarDescargaLat !== null ? Number(datos.viaje.lugarDescargaLat) : null,
+          datos.viaje.lugarDescargaLng !== null ? Number(datos.viaje.lugarDescargaLng) : null
+        )
+      ) {
+        
+        const urlMapa = generarURLMapa(
+          datos.viaje.lugarCargaLat !== null ? Number(datos.viaje.lugarCargaLat) : 0,
+          datos.viaje.lugarCargaLng !== null ? Number(datos.viaje.lugarCargaLng) : 0,
+          datos.viaje.lugarDescargaLat !== null ? Number(datos.viaje.lugarDescargaLat) : 0,
+          datos.viaje.lugarDescargaLng !== null ? Number(datos.viaje.lugarDescargaLng) : 0
+        )
+        qrDataUrl = await QRCode.toDataURL(urlMapa, { width: 300, margin: 2 })
+        tipoMapa = 'viaje'
+        console.log("✅ QR generado con coordenadas del VIAJE")
+      }
+      // Fallback: QR con información textual
       else {
-        console.log("⚠️ [PDF] Sin coordenadas, generando QR alternativo")
-        qrDataUrl = await QRCode.toDataURL(`Viaje: ${viaje.numeroViaje} - ${viaje.producto}\nOrigen: ${viaje.lugarCarga}\nDestino: ${viaje.lugarDescarga}`)
+        const infoTexto = [
+          `Viaje N° ${datos.viaje.numeroViaje}`,
+          `Producto: ${datos.viaje.producto || 'No especificado'}`,
+          `Origen: ${datos.ruta?.origen || datos.viaje.lugarCarga || 'No especificado'}`,
+          `Destino: ${datos.ruta?.destino || datos.viaje.lugarDescarga || 'No especificado'}`
+        ].join('\n')
+        
+        qrDataUrl = await QRCode.toDataURL(infoTexto, { width: 300, margin: 2 })
+        tipoMapa = 'texto'
+        console.log("⚠️ QR generado con información textual (sin coordenadas)")
       }
     } catch (qrError) {
-      console.error("❌ [PDF] Error generando QR:", qrError)
-      // Generar QR alternativo
-      qrDataUrl = await QRCode.toDataURL(`Viaje: ${viaje.numeroViaje}`)
+      console.error("❌ Error generando QR:", qrError)
+      // QR de emergencia
+      qrDataUrl = await QRCode.toDataURL(`Viaje: ${datos.viaje.numeroViaje}`, { width: 300, margin: 2 })
     }
 
-    // Crear PDF
-    console.log("📄 [PDF] Creando PDF...")
+    // ========== GENERACIÓN DEL PDF ==========
+    console.log("📄 Generando PDF...")
     const pdf = new jsPDF()
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
-    let yPosition = 20
 
-    // Configuración de fuentes y colores
-    const primaryColor = [20, 70, 50]
-    const secondaryColor = [0, 0, 0]
+    // Header
+    let yPos = dibujarHeader(pdf, datos.viaje.numeroViaje, pageWidth)
+    yPos += 10
 
-    // Encabezado
-    pdf.setFontSize(24)
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-    pdf.text("HOJA DE RUTA", pageWidth / 2, yPosition, { align: "center" })
-    yPosition += 15
-
-    // Número de viaje
-    pdf.setFontSize(11)
-    pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-    pdf.text(`Viaje: ${viaje.numeroViaje}`, 20, yPosition)
-    yPosition += 8
-
-    // Información de la RUTA (si existe)
-    if (ruta) {
-      pdf.setFontSize(12)
-      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-      pdf.text("INFORMACIÓN DE LA RUTA", 20, yPosition)
-      yPosition += 8
-
-      pdf.setFontSize(10)
-      pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-      pdf.text(`Nombre: ${ruta.nombre || "No especificado"}`, 20, yPosition)
-      yPosition += 6
-      pdf.text(`Origen: ${ruta.origen || viaje.lugarCarga}`, 20, yPosition)
-      yPosition += 6
-      pdf.text(`Destino: ${ruta.destino || viaje.lugarDescarga}`, 20, yPosition)
-      yPosition += 6
-      if (ruta.distanciaKm) {
-        pdf.text(`Distancia: ${ruta.distanciaKm} km`, 20, yPosition)
-        yPosition += 6
+    // ========== INFORMACIÓN DE LA RUTA ==========
+    if (datos.ruta) {
+      yPos = dibujarSeccion(pdf, "📍 INFORMACIÓN DE LA RUTA", yPos, pageWidth, pageHeight)
+      
+      yPos = agregarCampo(pdf, "Nombre de Ruta", datos.ruta.nombre || "No especificado", 20, yPos, pageWidth, pageHeight)
+      yPos = agregarCampo(pdf, "Origen", datos.ruta.origen || "No especificado", 20, yPos, pageWidth, pageHeight)
+      yPos = agregarCampo(pdf, "Destino", datos.ruta.destino || "No especificado", 20, yPos, pageWidth, pageHeight)
+      
+      if (datos.ruta.distanciaKm) {
+        yPos = agregarCampo(pdf, "Distancia", `${datos.ruta.distanciaKm} km`, 20, yPos, pageWidth, pageHeight)
       }
-      if (ruta.duracionMinutos) {
-        pdf.text(`Duración estimada: ${ruta.duracionMinutos} min`, 20, yPosition)
-        yPosition += 6
+      
+      if (datos.ruta.duracionMinutos) {
+        const duracionMin = Number(datos.ruta.duracionMinutos)
+        const horas = Math.floor(duracionMin / 60)
+        const minutos = duracionMin % 60
+        const duracionTexto = horas > 0 ? `${horas}h ${minutos}min` : `${minutos} min`
+        yPos = agregarCampo(pdf, "Duración Estimada", duracionTexto, 20, yPos, pageWidth, pageHeight)
       }
-      yPosition += 6
+      
+      yPos += 5
     }
 
-    // Información del vehículo
-    pdf.setFontSize(12)
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-    pdf.text("INFORMACIÓN DEL VEHÍCULO", 20, yPosition)
-    yPosition += 8
-
-    pdf.setFontSize(10)
-    pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-    pdf.text(`Placa: ${vehiculo?.placa || "No asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Marca: ${vehiculo?.marca || "No asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Tipo: ${vehiculo?.tipoVehiculo || "No asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Capacidad: ${vehiculo?.capacidadLitros || "N/A"} litros`, 20, yPosition)
-    yPosition += 12
-
-    // Información del conductor
-    pdf.setFontSize(12)
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-    pdf.text("INFORMACIÓN DEL CONDUCTOR", 20, yPosition)
-    yPosition += 8
-
-    pdf.setFontSize(10)
-    pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-    pdf.text(`Nombre: ${conductor?.nombre || "No"} ${conductor?.apellido || "asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Cédula: ${conductor?.ci || "No asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Licencia: ${conductor?.licencia || "No asignado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Teléfono: ${conductor?.telefono || "No asignado"}`, 20, yPosition)
-    yPosition += 12
-
-    // Información del viaje
-    pdf.setFontSize(12)
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-    pdf.text("INFORMACIÓN DEL VIAJE", 20, yPosition)
-    yPosition += 8
-
-    pdf.setFontSize(10)
-    pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-    pdf.text(`Producto: ${viaje.producto || "No especificado"}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Cantidad: ${viaje.cantidad || "N/A"} ${viaje.unidad || ""}`, 20, yPosition)
-    yPosition += 6
+    // ========== INFORMACIÓN DEL VEHÍCULO ==========
+    yPos = dibujarSeccion(pdf, "🚛 INFORMACIÓN DEL VEHÍCULO", yPos, pageWidth, pageHeight)
     
-    // Mostrar lugares de carga/descarga (usar los de la ruta si existen)
-    const lugarCarga = ruta?.origen || viaje.lugarCarga || "No especificado"
-    const lugarDescarga = ruta?.destino || viaje.lugarDescarga || "No especificado"
+    yPos = agregarCampo(pdf, "Placa", datos.vehiculo?.placa || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Marca", datos.vehiculo?.marca || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Modelo", datos.vehiculo?.anio || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Tipo", datos.vehiculo?.tipoVehiculo || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Capacidad", datos.vehiculo?.capacidadLitros ? `${datos.vehiculo.capacidadLitros} litros` : "N/A", 20, yPos, pageWidth, pageHeight)
+    yPos += 5
+
+    // ========== INFORMACIÓN DEL CONDUCTOR ==========
+    yPos = dibujarSeccion(pdf, "👤 INFORMACIÓN DEL CONDUCTOR", yPos, pageWidth, pageHeight)
     
-    pdf.text(`Lugar de Carga: ${lugarCarga}`, 20, yPosition)
-    yPosition += 6
-    pdf.text(`Lugar de Descarga: ${lugarDescarga}`, 20, yPosition)
-    yPosition += 6
+    const nombreCompleto = datos.conductor 
+      ? `${datos.conductor.nombre || ''} ${datos.conductor.apellido || ''}`.trim() || "No asignado"
+      : "No asignado"
     
-    // Fechas
-    if (viaje.fechaInicio) {
-      try {
-        const fechaInicio = new Date(viaje.fechaInicio).toLocaleString("es-ES")
-        pdf.text(`Fecha de Inicio: ${fechaInicio}`, 20, yPosition)
-        yPosition += 6
-      } catch (dateError) {
-        pdf.text(`Fecha de Inicio: ${viaje.fechaInicio}`, 20, yPosition)
-        yPosition += 6
-      }
+    yPos = agregarCampo(pdf, "Nombre Completo", nombreCompleto, 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Cédula de Identidad", datos.conductor?.ci || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Licencia", datos.conductor?.licencia || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Teléfono", datos.conductor?.telefono || "No asignado", 20, yPos, pageWidth, pageHeight)
+    yPos += 5
+
+    // ========== INFORMACIÓN DEL VIAJE ==========
+    yPos = dibujarSeccion(pdf, "📦 DETALLES DEL VIAJE", yPos, pageWidth, pageHeight)
+    
+    yPos = agregarCampo(pdf, "Producto", datos.viaje.producto || "No especificado", 20, yPos, pageWidth, pageHeight)
+    
+    const cantidadTexto = datos.viaje.cantidad 
+      ? `${datos.viaje.cantidad} ${datos.viaje.unidad || ''}`.trim()
+      : "No especificada"
+    yPos = agregarCampo(pdf, "Cantidad", cantidadTexto, 20, yPos, pageWidth, pageHeight)
+    
+    const lugarCarga = datos.ruta?.origen || datos.viaje.lugarCarga || "No especificado"
+    const lugarDescarga = datos.ruta?.destino || datos.viaje.lugarDescarga || "No especificado"
+    
+    yPos = agregarCampo(pdf, "Lugar de Carga", lugarCarga, 20, yPos, pageWidth, pageHeight)
+    yPos = agregarCampo(pdf, "Lugar de Descarga", lugarDescarga, 20, yPos, pageWidth, pageHeight)
+    
+    if (datos.viaje.fechaInicio) {
+      yPos = agregarCampo(pdf, "Fecha de Inicio", formatearFecha(datos.viaje.fechaInicio), 20, yPos, pageWidth, pageHeight)
     }
     
-    if (viaje.fechaEstimadaLlegada) {
-      try {
-        const fechaEstimada = new Date(viaje.fechaEstimadaLlegada).toLocaleString("es-ES")
-        pdf.text(`Fecha Estimada de Llegada: ${fechaEstimada}`, 20, yPosition)
-        yPosition += 6
-      } catch (dateError) {
-        pdf.text(`Fecha Estimada de Llegada: ${viaje.fechaEstimadaLlegada}`, 20, yPosition)
-        yPosition += 6
-      }
+    if (datos.viaje.fechaEstimadaLlegada) {
+      yPos = agregarCampo(pdf, "Fecha Estimada de Llegada", formatearFecha(datos.viaje.fechaEstimadaLlegada), 20, yPos, pageWidth, pageHeight)
     }
     
-    yPosition += 6
+    yPos += 10
 
-    // Agregar QR
-    if (yPosition + 60 > pageHeight) {
+    // ========== CÓDIGO QR ==========
+    if (yPos + 70 > pageHeight - 20) {
       pdf.addPage()
-      yPosition = 20
+      yPos = 20
     }
 
-    pdf.setFontSize(12)
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-    pdf.text("CÓDIGO QR - Escanea para ver la ruta", 20, yPosition)
-    yPosition += 8
+    yPos = dibujarSeccion(pdf, "🗺️ CÓDIGO QR - RUTA DEL VIAJE", yPos, pageWidth, pageHeight)
     
+    // Mensaje según tipo de QR
+    pdf.setFontSize(9)
+    pdf.setFont('helvetica', 'italic')
+    pdf.setTextColor(100, 100, 100)
+    
+    let mensajeQR = ''
+    if (tipoMapa === 'ruta') {
+      mensajeQR = 'Escanea para abrir la ruta en Google Maps (coordenadas de ruta registrada)'
+    } else if (tipoMapa === 'viaje') {
+      mensajeQR = 'Escanea para abrir la ruta en Google Maps (coordenadas del viaje)'
+    } else {
+      mensajeQR = 'Código QR con información del viaje (sin coordenadas GPS disponibles)'
+    }
+    
+    const mensajeLines = pdf.splitTextToSize(mensajeQR, pageWidth - 40)
+    pdf.text(mensajeLines, 20, yPos)
+    yPos += mensajeLines.length * 4 + 5
+    
+    // Agregar QR centrado
     try {
-      pdf.addImage(qrDataUrl, "PNG", pageWidth / 2 - 25, yPosition, 50, 50)
-      yPosition += 55
+      const qrSize = 55
+      const qrX = (pageWidth - qrSize) / 2
+      pdf.addImage(qrDataUrl, "PNG", qrX, yPos, qrSize, qrSize)
+      yPos += qrSize + 10
     } catch (imageError) {
-      console.error("❌ [PDF] Error agregando imagen QR:", imageError)
-      pdf.text("(Error al generar código QR)", pageWidth / 2, yPosition + 25, { align: "center" })
-      yPosition += 55
+      console.error("❌ Error agregando imagen QR:", imageError)
+      pdf.setTextColor(255, 0, 0)
+      pdf.text("Error al generar código QR", pageWidth / 2, yPos, { align: "center" })
+      yPos += 10
     }
 
-    // Observaciones
-    if (viaje.observaciones) {
-      if (yPosition + 20 > pageHeight) {
+    // ========== OBSERVACIONES ==========
+    if (datos.viaje.observaciones && datos.viaje.observaciones.trim()) {
+      if (yPos + 25 > pageHeight - 20) {
         pdf.addPage()
-        yPosition = 20
+        yPos = 20
       }
       
-      pdf.setFontSize(10)
-      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-      pdf.text("OBSERVACIONES:", 20, yPosition)
-      yPosition += 6
-      pdf.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+      yPos = dibujarSeccion(pdf, "📝 OBSERVACIONES", yPos, pageWidth, pageHeight)
       
-      try {
-        const observacionesLines = pdf.splitTextToSize(viaje.observaciones, pageWidth - 40)
-        pdf.text(observacionesLines, 20, yPosition)
-      } catch (textError) {
-        pdf.text("(Error al procesar observaciones)", 20, yPosition)
-      }
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(9)
+      pdf.setTextColor(0, 0, 0)
+      
+      const obsLines = pdf.splitTextToSize(datos.viaje.observaciones, pageWidth - 40)
+      pdf.text(obsLines, 20, yPos)
+      yPos += obsLines.length * 4 + 10
     }
 
-    // Generar el PDF
-    console.log("💾 [PDF] Convirtiendo PDF a buffer...")
-    const pdfUint8Array = pdf.output('arraybuffer')
-    const filename = `Hoja-Ruta-${viaje.numeroViaje}.pdf`
+    // ========== FOOTER ==========
+    const totalPages = pdf.getNumberOfPages()
+    pdf.setFont('helvetica', 'italic')
+    pdf.setFontSize(8)
+    pdf.setTextColor(150, 150, 150)
+    
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i)
+      const footerY = pageHeight - 10
+      pdf.text(
+        `Página ${i} de ${totalPages} | Generado: ${new Date().toLocaleString('es-BO')}`,
+        pageWidth / 2,
+        footerY,
+        { align: 'center' }
+      )
+    }
 
-    console.log("✅ [PDF] PDF generado exitosamente, tamaño:", pdfUint8Array.byteLength, "bytes")
+    // ========== GENERAR Y ENVIAR PDF ==========
+    console.log("💾 Convirtiendo PDF a buffer...")
+    const pdfBuffer = pdf.output('arraybuffer')
+    const filename = `Hoja-Ruta-${datos.viaje.numeroViaje.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`
 
-    return new NextResponse(pdfUint8Array, {
+    console.log("✅ PDF generado:", {
+      tamaño: `${(pdfBuffer.byteLength / 1024).toFixed(2)} KB`,
+      páginas: totalPages,
+      tipoQR: tipoMapa
+    })
+
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "no-cache",
-      },
+        "Content-Length": pdfBuffer.byteLength.toString(),
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
     })
 
   } catch (error) {
-    console.error("💥 [PDF] Error crítico generando PDF:", error)
+    console.error("💥 Error crítico:", error)
     
     return NextResponse.json(
       { 
         error: "Error interno del servidor al generar PDF",
-        details: error instanceof Error ? error.message : "Error desconocido"
+        details: error instanceof Error ? error.message : "Error desconocido",
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     )

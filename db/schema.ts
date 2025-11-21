@@ -170,9 +170,9 @@ export const conductores = pgTable("conductores", {
 
   nombre: text("nombre").notNull(),
   apellido: text("apellido").notNull(),
-  ci: text("ci").notNull().unique(), // Cédula de identidad
+  ci: text("ci").notNull().unique(), 
   licencia: text("licencia").notNull(),
-  categoria: text("categoria").notNull(), // A, B, C, etc.
+  categoria: text("categoria").notNull(), 
   vencimientoLicencia: timestamp("vencimiento_licencia").notNull(),
   telefono: text("telefono"),
   direccion: text("direccion"),

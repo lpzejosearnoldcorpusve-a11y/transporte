@@ -13,37 +13,21 @@ import {
   ChevronDown,
   Radio,
   MapPin,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/common/logo"
 import { useState } from "react"
 
 const menuItems = [
+  // --- VISIÓN GENERAL ---
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    title: "Usuarios y Roles",
-    href: "/dashboard/users-roles",
-    icon: Users,
-  },
-  {
-    title: "Vehículos",
-    href: "/dashboard/vehiculos",
-    icon: Truck,
-  },
-  {
-    title: "Rutas",
-    href: "/dashboard/rutas",
-    icon: Route,
-  },
-  {
-    title: "Viajes",
-    href: "/dashboard/viajes",
-    icon: MapPin,
-  },
+  
+  // --- OPERATIVA (Monitoreo y Movimiento) ---
   {
     title: "GPS",
     icon: Radio,
@@ -57,6 +41,23 @@ const menuItems = [
         href: "/dashboard/dispositivos-gps",
       },
     ],
+  },
+  {
+    title: "Viajes",
+    href: "/dashboard/viajes",
+    icon: MapPin,
+  },
+  {
+    title: "Rutas",
+    href: "/dashboard/rutas",
+    icon: Route,
+  },
+
+  // --- GESTIÓN DE ACTIVOS ---
+  {
+    title: "Vehículos",
+    href: "/dashboard/vehiculos",
+    icon: Truck,
   },
   {
     title: "Conductores",
@@ -76,6 +77,18 @@ const menuItems = [
     title: "Mantenimiento",
     href: "/dashboard/mantenimiento",
     icon: Wrench,
+  },
+
+  // --- ANÁLISIS Y ADMIN ---
+  {
+    title: "Reportes",
+    href: "/dashboard/reportes",
+    icon: BarChart3,
+  },
+  {
+    title: "Usuarios y Roles",
+    href: "/dashboard/users-roles",
+    icon: Users,
   },
   {
     title: "Ajustes",
@@ -98,8 +111,9 @@ export function Sidebar() {
         <Logo variant="light" />
       </div>
 
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {menuItems.map((item) => {
+          // Renderizado de ítems con Submenú
           if (item.submenu) {
             const isOpen = openSubmenu === item.title
             const isAnySubmenuActive = item.submenu.some((sub) => pathname === sub.href)
@@ -149,7 +163,7 @@ export function Sidebar() {
             )
           }
 
-          // Items normales sin submenu
+          // Renderizado de ítems normales sin submenú
           const isActive = pathname === item.href
           const Icon = item.icon
 
