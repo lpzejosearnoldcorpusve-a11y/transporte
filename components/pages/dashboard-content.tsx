@@ -190,12 +190,12 @@ export function DashboardContent() {
   // Los datos ya vienen directamente de las APIs REST
   const dashboard = dashboardData
   // Asegurar compatibilidad de tipos
-  const viajesEnTransito = (viajesData || []).map(viaje => ({
+  const viajesEnTransito = (Array.isArray(viajesData) ? viajesData : []).map(viaje => ({
     ...viaje,
     vehiculo: viaje.vehiculo || undefined,
     conductor: viaje.conductor || undefined
   }))
-  const vehiculosTracking = trackingData || []
+  const vehiculosTracking = Array.isArray(trackingData) ? trackingData : []
 
   return (
     <div className="space-y-6">
@@ -242,9 +242,9 @@ export function DashboardContent() {
       {/* Alertas y Gráficos */}
       {dashboard && (
         <DashboardAlertasGraficos
-          alertas={dashboard.alertas}
-          viajesPorDia={dashboard.viajesPorDia}
-          litrosPorProducto={dashboard.litrosPorProducto}
+          alertas={dashboard.alertas || []}
+          viajesPorDia={dashboard.viajesPorDia || []}
+          litrosPorProducto={dashboard.litrosPorProducto || []}
         />
       )}
 

@@ -2,10 +2,21 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { conductores } from "@/db/schema"
 import { eq } from "drizzle-orm"
+import { checkPermissionAPI, notAuthenticated, permissionDenied } from "@/lib/permission-utils"
+import { PERMISSIONS } from "@/lib/permissions"
 
 // GET - Obtener todos los conductores
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Verificar autenticación y permisos
+    const authCheck = await checkPermissionAPI(request, PERMISSIONS.CONDUCTORES_VIEW)
+
+    if (!authCheck.allowed) {
+      return authCheck.error === "No autenticado"
+        ? notAuthenticated()
+        : permissionDenied("No tienes permiso para ver conductores")
+    }
+
     const allConductores = await db.select().from(conductores)
     return NextResponse.json(allConductores)
   } catch (error) {
@@ -17,6 +28,15 @@ export async function GET() {
 // POST - Crear nuevo conductor
 export async function POST(request: NextRequest) {
   try {
+    // Verificar autenticación y permisos
+    const authCheck = await checkPermissionAPI(request, PERMISSIONS.CONDUCTORES_CREATE)
+
+    if (!authCheck.allowed) {
+      return authCheck.error === "No autenticado"
+        ? notAuthenticated()
+        : permissionDenied("No tienes permiso para crear conductores")
+    }
+
     const body = await request.json()
     const { nombre, apellido, ci, licencia, categoria, vencimientoLicencia, telefono, direccion } = body
 
@@ -56,6 +76,15 @@ export async function POST(request: NextRequest) {
 // PUT - Actualizar conductor
 export async function PUT(request: NextRequest) {
   try {
+    // Verificar autenticación y permisos
+    const authCheck = await checkPermissionAPI(request, PERMISSIONS.CONDUCTORES_EDIT)
+
+    if (!authCheck.allowed) {
+      return authCheck.error === "No autenticado"
+        ? notAuthenticated()
+        : permissionDenied("No tienes permiso para editar conductores")
+    }
+
     const body = await request.json()
     const { id, ...updateData } = body
 
@@ -84,6 +113,15 @@ export async function PUT(request: NextRequest) {
 // DELETE - Eliminar conductor
 export async function DELETE(request: NextRequest) {
   try {
+    // Verificar autenticación y permisos
+    const authCheck = await checkPermissionAPI(request, PERMISSIONS.CONDUCTORES_DELETE)
+
+    if (!authCheck.allowed) {
+      return authCheck.error === "No autenticado"
+        ? notAuthenticated()
+        : permissionDenied("No tienes permiso para eliminar conductores")
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
 

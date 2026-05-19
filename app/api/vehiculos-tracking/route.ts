@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { gpsTracking, vehiculos } from '@/db/schema'
 import { eq, desc, sql } from 'drizzle-orm'
+import { checkPermissionAPI, notAuthenticated, permissionDenied } from '@/lib/permission-utils'
+import { PERMISSIONS } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
+  // Validar autenticación y permisos
+  const authCheck = await checkPermissionAPI(request, PERMISSIONS.VEHICULOS_VIEW)
+  if (!authCheck.allowed) {
+    return authCheck.error === "No autenticado"
+      ? notAuthenticated()
+      : permissionDenied("No tienes permiso para ver vehículos")
+  }
+
   try {
     // Obtener las últimas posiciones GPS de todos los vehículos
     const vehiculosConGPS = await db.select({

@@ -3,8 +3,18 @@ import { db } from '@/db'
 import { viajes, vehiculos, conductores } from '@/db/schema'
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm'
 import { startOfDay, endOfDay } from 'date-fns'
+import { checkPermissionAPI, notAuthenticated, permissionDenied } from '@/lib/permission-utils'
+import { PERMISSIONS } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
+  // Validar autenticación y permisos
+  const authCheck = await checkPermissionAPI(request, PERMISSIONS.VIAJES_VIEW)
+  if (!authCheck.allowed) {
+    return authCheck.error === "No autenticado"
+      ? notAuthenticated()
+      : permissionDenied("No tienes permiso para ver viajes")
+  }
+
   try {
     const today = new Date()
     const startOfToday = startOfDay(today)

@@ -3,8 +3,18 @@ import { db } from '@/db'
 import { vehiculos, conductores, viajes, rutas, mantenimientos, gpsTracking, dispositivosGps } from '@/db/schema'
 import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
+import { checkPermissionAPI, notAuthenticated, permissionDenied } from '@/lib/permission-utils'
+import { PERMISSIONS } from '@/lib/permissions'
 
 export async function GET(request: NextRequest) {
+  // Validar autenticación y permisos
+  const authCheck = await checkPermissionAPI(request, PERMISSIONS.DASHBOARD_VIEW)
+  if (!authCheck.allowed) {
+    return authCheck.error === "No autenticado"
+      ? notAuthenticated()
+      : permissionDenied("No tienes permiso para ver el dashboard")
+  }
+
   try {
     const today = new Date()
     const startOfToday = startOfDay(today)

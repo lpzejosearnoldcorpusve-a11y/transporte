@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { WelcomeAnimation } from "@/components/animations/welcome-animation"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react"
 
@@ -18,8 +17,6 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [showWelcome, setShowWelcome] = useState(false)
-  const [userName, setUserName] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
@@ -79,23 +76,15 @@ export function LoginForm() {
     try {
       await login(email, password)
 
-      const response = await fetch("/api/auth/me")
-      const data = await response.json()
-      setUserName(data.user.name)
-
-      setShowWelcome(true)
+      // Ya tenemos el usuario del login, no necesitamos hacer otro fetch
+      // Esperar un momento para que se estabilice el estado
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 500)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión")
       setIsLoading(false)
     }
-  }
-
-  const handleWelcomeComplete = () => {
-    router.push("/dashboard")
-  }
-
-  if (showWelcome) {
-    return <WelcomeAnimation userName={userName} onComplete={handleWelcomeComplete} />
   }
 
   return (
