@@ -13,6 +13,7 @@ Esta carpeta contiene toda la configuración de la base de datos usando Drizzle 
 ### roles
 - Almacena los roles del sistema (admin, operador, supervisor, etc.)
 - Incluye permisos como array de texto
+kaks
 
 ### users
 - Usuarios del sistema
