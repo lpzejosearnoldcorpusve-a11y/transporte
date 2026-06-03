@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
         password: users.password,
         active: users.active,
         roleId: users.roleId,
+        profileImage: users.profileImage, 
         roleName: roles.name,
         rolePermissions: roles.permissions,
       })
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
         email: userData.email,
         name: userData.name,
         role: userData.roleName,
+        profileImage: userData.profileImage, // 👈 Agregar en la respuesta
         permissions: userData.rolePermissions,
       },
     })
