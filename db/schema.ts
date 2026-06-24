@@ -341,6 +341,55 @@ export const viajes = pgTable("viajes", {
   creadoPor: text("creado_por").references(() => users.id),
 })
 
+// Tabla de gastos operativos
+export const gastos = pgTable("gastos", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  tipoGasto: text("tipo_gasto").notNull(),
+  monto: numeric("monto").notNull(),
+  moneda: text("moneda").default("BOB").notNull(),
+  descripcion: text("descripcion"),
+  fecha: timestamp("fecha").notNull(),
+  referenciaFactura: text("referencia_factura"),
+  imagenComprobanteUrl: text("imagen_comprobante_url"),
+
+  // Vinculación con viaje
+  viajeId: text("viaje_id").references(() => viajes.id, { onDelete: "set null" }),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
+// Tabla de facturas
+export const facturas = pgTable("facturas", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  numeroFactura: text("numero_factura"),
+  fechaFactura: timestamp("fecha_factura").notNull(),
+  proveedor: text("proveedor"),
+  categoria: text("categoria").notNull(),
+  archivoUrl: text("archivo_url").notNull(),
+  archivoNombre: text("archivo_nombre").notNull(),
+  archivoTipo: text("archivo_tipo").notNull(),
+  estado: text("estado").default("pendiente").notNull(), // pendiente, procesada, error
+  errorMensaje: text("error_mensaje"),
+  datosOcr: text("datos_ocr"), // JSON string con datos extraídos por OCR
+  cloudinaryPublicId: text("cloudinary_public_id"),
+
+  // Vinculaciones
+  conductorId: text("conductor_id").references(() => conductores.id, { onDelete: "set null" }),
+  gastoId: text("gasto_id").references(() => gastos.id, { onDelete: "set null" }),
+  vehiculoId: text("vehiculo_id").references(() => vehiculos.id, { onDelete: "set null" }),
+  viajeId: text("viaje_id").references(() => viajes.id, { onDelete: "set null" }),
+
+  creadoEn: timestamp("creado_en").defaultNow().notNull(),
+  actualizadoEn: timestamp("actualizado_en").$onUpdate(() => new Date()),
+})
+
 // Tipos TypeScript inferidos
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
@@ -374,3 +423,9 @@ export type NewDispositivoGps = typeof dispositivosGps.$inferInsert
 
 export type Viaje = typeof viajes.$inferSelect
 export type NewViaje = typeof viajes.$inferInsert
+
+export type Gasto = typeof gastos.$inferSelect
+export type NewGasto = typeof gastos.$inferInsert
+
+export type Factura = typeof facturas.$inferSelect
+export type NewFactura = typeof facturas.$inferInsert

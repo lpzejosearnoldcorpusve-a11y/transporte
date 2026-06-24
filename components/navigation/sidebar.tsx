@@ -14,6 +14,8 @@ import {
   Radio,
   MapPin,
   BarChart3,
+  DollarSign,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/common/logo"
@@ -77,6 +79,22 @@ const menuItems = [
     title: "Mantenimiento",
     href: "/dashboard/mantenimiento",
     icon: Wrench,
+  },
+
+  // --- FINANZAS ---
+  {
+    title: "Finanzas",
+    icon: DollarSign,
+    submenu: [
+      {
+        title: "Gastos",
+        href: "/dashboard/gastos",
+      },
+      {
+        title: "Facturas",
+        href: "/dashboard/facturas",
+      },
+    ],
   },
 
   // --- ANÁLISIS Y ADMIN ---

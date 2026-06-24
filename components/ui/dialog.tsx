@@ -8,9 +8,10 @@ interface DialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
+  className?: string
 }
 
-export function Dialog({ open, onOpenChange, children }: DialogProps) {
+export function Dialog({ open, onOpenChange, children, className }: DialogProps) {
   if (!open) return null
 
   return (
@@ -20,7 +21,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-w-lg">{children}</div>
+      <div className={cn("relative z-50 w-full max-w-lg", className)}>{children}</div>
     </div>
   )
 }
